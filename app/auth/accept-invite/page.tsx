@@ -4,10 +4,10 @@ export const dynamic = 'force-dynamic'
 
 import { useSearchParams, useRouter } from 'next/navigation'
 import { signIn, useSession } from 'next-auth/react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 
-export default function AcceptInvitePage() {
+function AcceptInviteContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { data: session } = useSession()
@@ -180,5 +180,17 @@ export default function AcceptInvitePage() {
         </button>
       </div>
     </div>
+  )
+}
+
+export default function AcceptInvitePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">Loading...</div>
+      </div>
+    }>
+      <AcceptInviteContent />
+    </Suspense>
   )
 }
