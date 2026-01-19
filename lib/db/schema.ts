@@ -1,17 +1,24 @@
-import Database from 'better-sqlite3'
-import path from 'path'
-import fs from 'fs'
+// Legacy SQLite schema - no longer used, app now uses Prisma with PostgreSQL
+// This file is kept for migration purposes but should not be used in production
 
-const dbPath = process.env.DATABASE_PATH || './data/secondbrain.db'
-const DEFAULT_TENANT_ID = 'default'
+export function createDatabase(): never {
+  throw new Error('createDatabase() is no longer supported. Please use Prisma migrations instead.')
+  
+  /* Legacy code removed - using Prisma now
+  import Database from 'better-sqlite3'
+  import path from 'path'
+  import fs from 'fs'
 
-// Ensure data directory exists
-const dbDir = path.dirname(dbPath)
-if (!fs.existsSync(dbDir)) {
-  fs.mkdirSync(dbDir, { recursive: true })
-}
+  const dbPath = process.env.DATABASE_PATH || './data/secondbrain.db'
+  const DEFAULT_TENANT_ID = 'default'
 
-export function createDatabase(): Database.Database {
+  // Ensure data directory exists
+  const dbDir = path.dirname(dbPath)
+  if (!fs.existsSync(dbDir)) {
+    fs.mkdirSync(dbDir, { recursive: true })
+  }
+
+  const db = (() => {
   const db = new Database(dbPath)
   
   // Enable foreign keys
@@ -676,5 +683,9 @@ RULES:
     console.warn('Could not populate search index:', error)
   }
   
+    return db
+  })()
+  
   return db
+  */
 }

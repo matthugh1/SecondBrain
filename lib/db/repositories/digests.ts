@@ -30,8 +30,6 @@ export async function getAllDigests(tenantId: string): Promise<Digest[]> {
     id: row.id,
     type: row.type as 'daily' | 'weekly' | 'custom',
     content: row.content,
-    prompt: row.prompt || undefined,
-    name: row.name || undefined,
     created: row.created.toISOString(),
   }))
 }

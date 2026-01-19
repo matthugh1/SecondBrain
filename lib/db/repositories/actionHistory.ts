@@ -1,4 +1,4 @@
-import { getDatabase } from '../index'
+import { prisma } from '../index'
 
 export type ActionType = 'create' | 'update' | 'delete' | 'archive' | 'unarchive' | 'bulk_delete' | 'bulk_archive' | 'bulk_update' | 'fix' | 'bulk_unarchive'
 
@@ -14,153 +14,171 @@ export interface ActionHistory {
   undone?: number
 }
 
-export function createActionHistory(tenantId: string, action: ActionHistory): number {
-  const db = getDatabase()
-  const stmt = db.prepare(`
-    INSERT INTO action_history (tenant_id, action_type, item_type, item_id, old_data, new_data, undone)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `)
-  const result = stmt.run(
-    tenantId,
-    action.action_type,
-    action.item_type,
-    action.item_id || null,
-    action.old_data || null,
-    action.new_data || null,
-    action.undone || 0
-  )
-  return Number(result.lastInsertRowid)
+export async function createActionHistory(tenantId: string, action: ActionHistory): Promise<number> {
+  const result = await prisma.actionHistory.create({
+    data: {
+      tenantId,
+      actionType: action.action_type,
+      itemType: action.item_type,
+      itemId: action.item_id || null,
+      oldData: action.old_data || null,
+      newData: action.new_data || null,
+      undone: action.undone || 0,
+    },
+  })
+  return result.id
 }
 
-export function getActionHistoryById(tenantId: string, id: number): ActionHistory | null {
-  const db = getDatabase()
-  const stmt = db.prepare('SELECT * FROM action_history WHERE tenant_id = ? AND id = ?')
-  const row = stmt.get(tenantId, id) as any
+export async function getActionHistoryById(tenantId: string, id: number): Promise<ActionHistory | null> {
+  const row = await prisma.actionHistory.findFirst({
+    where: {
+      tenantId,
+      id,
+    },
+  })
   if (!row) return null
   return {
     id: row.id,
-    tenant_id: row.tenant_id,
-    action_type: row.action_type,
-    item_type: row.item_type,
-    item_id: row.item_id,
-    old_data: row.old_data,
-    new_data: row.new_data,
-    timestamp: row.timestamp,
+    tenant_id: row.tenantId,
+    action_type: row.actionType as ActionType,
+    item_type: row.itemType,
+    item_id: row.itemId || null,
+    old_data: row.oldData || null,
+    new_data: row.newData || null,
+    timestamp: row.timestamp.toISOString(),
     undone: row.undone,
   }
 }
 
-export function getRecentActions(tenantId: string, limit: number = 50): ActionHistory[] {
-  const db = getDatabase()
-  const stmt = db.prepare(`
-    SELECT * FROM action_history 
-    WHERE tenant_id = ? AND undone = 0
-    ORDER BY timestamp DESC 
-    LIMIT ?
-  `)
-  const rows = stmt.all(tenantId, limit) as any[]
+export async function getRecentActions(tenantId: string, limit: number = 50): Promise<ActionHistory[]> {
+  const rows = await prisma.actionHistory.findMany({
+    where: {
+      tenantId,
+      undone: 0,
+    },
+    orderBy: { timestamp: 'desc' },
+    take: limit,
+  })
   return rows.map(row => ({
     id: row.id,
-    tenant_id: row.tenant_id,
-    action_type: row.action_type,
-    item_type: row.item_type,
-    item_id: row.item_id,
-    old_data: row.old_data,
-    new_data: row.new_data,
-    timestamp: row.timestamp,
+    tenant_id: row.tenantId,
+    action_type: row.actionType as ActionType,
+    item_type: row.itemType,
+    item_id: row.itemId || null,
+    old_data: row.oldData || null,
+    new_data: row.newData || null,
+    timestamp: row.timestamp.toISOString(),
     undone: row.undone,
   }))
 }
 
-export function getLastUndoneAction(tenantId: string): ActionHistory | null {
-  const db = getDatabase()
-  const stmt = db.prepare(`
-    SELECT * FROM action_history 
-    WHERE tenant_id = ? AND undone = 0
-    ORDER BY timestamp DESC 
-    LIMIT 1
-  `)
-  const row = stmt.get(tenantId) as any
+export async function getLastUndoneAction(tenantId: string): Promise<ActionHistory | null> {
+  const row = await prisma.actionHistory.findFirst({
+    where: {
+      tenantId,
+      undone: 0,
+    },
+    orderBy: { timestamp: 'desc' },
+  })
   if (!row) return null
   return {
     id: row.id,
-    tenant_id: row.tenant_id,
-    action_type: row.action_type,
-    item_type: row.item_type,
-    item_id: row.item_id,
-    old_data: row.old_data,
-    new_data: row.new_data,
-    timestamp: row.timestamp,
+    tenant_id: row.tenantId,
+    action_type: row.actionType as ActionType,
+    item_type: row.itemType,
+    item_id: row.itemId || null,
+    old_data: row.oldData || null,
+    new_data: row.newData || null,
+    timestamp: row.timestamp.toISOString(),
     undone: row.undone,
   }
 }
 
-export function markActionAsUndone(tenantId: string, id: number): void {
-  const db = getDatabase()
-  const stmt = db.prepare('UPDATE action_history SET undone = 1 WHERE tenant_id = ? AND id = ?')
-  stmt.run(tenantId, id)
+export async function markActionAsUndone(tenantId: string, id: number): Promise<void> {
+  await prisma.actionHistory.updateMany({
+    where: {
+      tenantId,
+      id,
+    },
+    data: {
+      undone: 1,
+    },
+  })
 }
 
-export function getUndoneActions(tenantId: string): ActionHistory[] {
-  const db = getDatabase()
-  const stmt = db.prepare(`
-    SELECT * FROM action_history 
-    WHERE tenant_id = ? AND undone = 1
-    ORDER BY timestamp DESC
-  `)
-  const rows = stmt.all(tenantId) as any[]
+export async function getUndoneActions(tenantId: string): Promise<ActionHistory[]> {
+  const rows = await prisma.actionHistory.findMany({
+    where: {
+      tenantId,
+      undone: 1,
+    },
+    orderBy: { timestamp: 'desc' },
+  })
   return rows.map(row => ({
     id: row.id,
-    tenant_id: row.tenant_id,
-    action_type: row.action_type,
-    item_type: row.item_type,
-    item_id: row.item_id,
-    old_data: row.old_data,
-    new_data: row.new_data,
-    timestamp: row.timestamp,
+    tenant_id: row.tenantId,
+    action_type: row.actionType as ActionType,
+    item_type: row.itemType,
+    item_id: row.itemId || null,
+    old_data: row.oldData || null,
+    new_data: row.newData || null,
+    timestamp: row.timestamp.toISOString(),
     undone: row.undone,
   }))
 }
 
-export function markActionAsRedone(tenantId: string, id: number): void {
-  const db = getDatabase()
-  const stmt = db.prepare('UPDATE action_history SET undone = 0 WHERE tenant_id = ? AND id = ?')
-  stmt.run(tenantId, id)
+export async function markActionAsRedone(tenantId: string, id: number): Promise<void> {
+  await prisma.actionHistory.updateMany({
+    where: {
+      tenantId,
+      id,
+    },
+    data: {
+      undone: 0,
+    },
+  })
 }
 
-export function getLastRedoneAction(tenantId: string): ActionHistory | null {
-  const db = getDatabase()
-  const stmt = db.prepare(`
-    SELECT * FROM action_history 
-    WHERE tenant_id = ? AND undone = 1
-    ORDER BY timestamp DESC 
-    LIMIT 1
-  `)
-  const row = stmt.get(tenantId) as any
+export async function getLastRedoneAction(tenantId: string): Promise<ActionHistory | null> {
+  const row = await prisma.actionHistory.findFirst({
+    where: {
+      tenantId,
+      undone: 1,
+    },
+    orderBy: { timestamp: 'desc' },
+  })
   if (!row) return null
   return {
     id: row.id,
-    tenant_id: row.tenant_id,
-    action_type: row.action_type,
-    item_type: row.item_type,
-    item_id: row.item_id,
-    old_data: row.old_data,
-    new_data: row.new_data,
-    timestamp: row.timestamp,
+    tenant_id: row.tenantId,
+    action_type: row.actionType as ActionType,
+    item_type: row.itemType,
+    item_id: row.itemId || null,
+    old_data: row.oldData || null,
+    new_data: row.newData || null,
+    timestamp: row.timestamp.toISOString(),
     undone: row.undone,
   }
 }
 
-export function clearOldHistory(tenantId: string, keepLast: number = 100): void {
-  const db = getDatabase()
-  const stmt = db.prepare(`
-    DELETE FROM action_history 
-    WHERE tenant_id = ? AND id NOT IN (
-      SELECT id FROM action_history 
-      WHERE tenant_id = ?
-      ORDER BY timestamp DESC 
-      LIMIT ?
-    )
-  `)
-  stmt.run(tenantId, tenantId, keepLast)
+export async function clearOldHistory(tenantId: string, keepLast: number = 100): Promise<void> {
+  // Get the IDs to keep
+  const keepIds = await prisma.actionHistory.findMany({
+    where: { tenantId },
+    orderBy: { timestamp: 'desc' },
+    take: keepLast,
+    select: { id: true },
+  })
+  
+  const keepIdSet = new Set(keepIds.map(r => r.id))
+  
+  // Delete all others
+  await prisma.actionHistory.deleteMany({
+    where: {
+      tenantId,
+      id: {
+        notIn: Array.from(keepIdSet),
+      },
+    },
+  })
 }

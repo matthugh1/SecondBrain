@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useChat } from '@/contexts/ChatContext'
 import { useDataUpdate } from '@/contexts/DataUpdateContext'
 import type { Message } from '@/contexts/ChatContext'
+import type { CaptureResult } from '@/lib/services/capture'
 
 export default function ChatInterface() {
   const { messages, setMessages } = useChat()
@@ -133,6 +134,7 @@ export default function ChatInterface() {
               destinationUrl: mcpResult.navigationUrl,
               confidence: 1,
               message: responseText,
+              logId: 0, // Not from inbox log
             },
             timestamp: new Date(),
             isUser: false,

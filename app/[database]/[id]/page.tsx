@@ -188,7 +188,7 @@ export default function DatabaseItemPage() {
                       />
                     ) : (
                       <InlineEditor
-                        value={value}
+                        value={value as string | number | null | undefined}
                         onSave={(newValue) => handleSaveField(key, newValue)}
                         type={
                           key === 'status' && database === 'projects'

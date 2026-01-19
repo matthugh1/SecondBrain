@@ -17,7 +17,7 @@ export async function POST() {
     }
     const { tenantId } = tenantCheck
 
-    const result = clearAllData(tenantId)
+    const result = await clearAllData(tenantId)
     return NextResponse.json({ success: true, ...result })
   } catch (error) {
     console.error('Error resetting database:', error)

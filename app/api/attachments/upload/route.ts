@@ -3,11 +3,19 @@ import { writeFile, mkdir } from 'fs/promises'
 import { existsSync } from 'fs'
 import path from 'path'
 import { createAttachment } from '@/lib/db/repositories/attachments'
+import { requireTenant } from '@/lib/auth/utils'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 const UPLOAD_DIR = './data/uploads'
 
 export async function POST(request: NextRequest) {
+  const tenantCheck = await requireTenant()
+  if (tenantCheck instanceof NextResponse) {
+    return tenantCheck
+  }
+  
+  const { tenantId } = tenantCheck
+
   try {
     const formData = await request.formData()
     const file = formData.get('file') as File
@@ -47,7 +55,7 @@ export async function POST(request: NextRequest) {
     await writeFile(filepath, buffer)
 
     // Save to database
-    const attachmentId = createAttachment({
+    const attachmentId = await createAttachment(tenantId, {
       item_type: itemType,
       item_id: parseInt(itemId),
       filename: originalName,

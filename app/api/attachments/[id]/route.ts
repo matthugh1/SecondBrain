@@ -2,14 +2,22 @@ import { NextRequest, NextResponse } from 'next/server'
 import { readFile } from 'fs/promises'
 import { existsSync } from 'fs'
 import { getAttachmentById, deleteAttachment } from '@/lib/db/repositories/attachments'
+import { requireTenant } from '@/lib/auth/utils'
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const tenantCheck = await requireTenant()
+  if (tenantCheck instanceof NextResponse) {
+    return tenantCheck
+  }
+  
+  const { tenantId } = tenantCheck
+
   try {
     const id = parseInt(params.id)
-    const attachment = getAttachmentById(id)
+    const attachment = await getAttachmentById(tenantId, id)
 
     if (!attachment) {
       return NextResponse.json({ error: 'Attachment not found' }, { status: 404 })
@@ -38,9 +46,16 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const tenantCheck = await requireTenant()
+  if (tenantCheck instanceof NextResponse) {
+    return tenantCheck
+  }
+  
+  const { tenantId } = tenantCheck
+
   try {
     const id = parseInt(params.id)
-    const attachment = getAttachmentById(id)
+    const attachment = await getAttachmentById(tenantId, id)
 
     if (!attachment) {
       return NextResponse.json({ error: 'Attachment not found' }, { status: 404 })
@@ -53,7 +68,7 @@ export async function DELETE(
     }
 
     // Delete from database
-    deleteAttachment(id)
+    await deleteAttachment(tenantId, id)
 
     return NextResponse.json({ success: true })
   } catch (error) {

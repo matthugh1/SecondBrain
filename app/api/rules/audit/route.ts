@@ -4,6 +4,7 @@ import {
   getClassificationAuditLogs,
   type ClassificationAuditStatus,
 } from '@/lib/db/repositories/classification-audit'
+import { requireTenant } from '@/lib/auth/utils'
 
 function parseLimit(value: string | null, fallback: number): number {
   const parsed = Number(value)
@@ -18,6 +19,13 @@ function parseOffset(value: string | null): number {
 }
 
 export async function GET(request: NextRequest) {
+  const tenantCheck = await requireTenant()
+  if (tenantCheck instanceof NextResponse) {
+    return tenantCheck
+  }
+  
+  const { tenantId } = tenantCheck
+
   try {
     const searchParams = request.nextUrl.searchParams
     const statusParam = searchParams.get('status') || undefined
@@ -32,10 +40,10 @@ export async function GET(request: NextRequest) {
 
     const provider = providerParam && providerParam.trim().length > 0 ? providerParam : undefined
 
-    const [logs, total] = [
-      getClassificationAuditLogs({ status, provider, limit, offset }),
-      getClassificationAuditCount({ status, provider }),
-    ]
+    const [logs, total] = await Promise.all([
+      getClassificationAuditLogs(tenantId, { status, provider, limit, offset }),
+      getClassificationAuditCount(tenantId, { status, provider }),
+    ])
 
     const normalizedLogs = logs.map(log => ({
       ...log,

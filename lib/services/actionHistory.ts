@@ -11,15 +11,15 @@ import * as projectsRepo from '@/lib/db/repositories/projects'
 import * as ideasRepo from '@/lib/db/repositories/ideas'
 import * as adminRepo from '@/lib/db/repositories/admin'
 
-export function logAction(
+export async function logAction(
   tenantId: string,
   actionType: ActionType,
   itemType: string,
   itemId: number | null,
   oldData: any = null,
   newData: any = null
-): void {
-  createActionHistory(tenantId, {
+): Promise<void> {
+  await createActionHistory(tenantId, {
     action_type: actionType,
     item_type: itemType,
     item_id: itemId,
@@ -30,7 +30,7 @@ export function logAction(
 }
 
 export async function undoLastAction(tenantId: string): Promise<{ success: boolean; message: string }> {
-  const action = getLastUndoneAction(tenantId)
+  const action = await getLastUndoneAction(tenantId)
   if (!action) {
     return { success: false, message: 'No actions to undo' }
   }
@@ -138,7 +138,7 @@ export async function undoLastAction(tenantId: string): Promise<{ success: boole
         break
     }
 
-    markActionAsUndone(tenantId, action.id!)
+    await markActionAsUndone(tenantId, action.id!)
     return { success: true, message: 'Action undone' }
   } catch (error) {
     console.error('Error undoing action:', error)
@@ -147,7 +147,7 @@ export async function undoLastAction(tenantId: string): Promise<{ success: boole
 }
 
 export async function redoLastAction(tenantId: string): Promise<{ success: boolean; message: string }> {
-  const action = getLastRedoneAction(tenantId)
+  const action = await getLastRedoneAction(tenantId)
   if (!action) {
     return { success: false, message: 'No actions to redo' }
   }
@@ -221,7 +221,7 @@ export async function redoLastAction(tenantId: string): Promise<{ success: boole
         break
     }
 
-    markActionAsRedone(tenantId, action.id!)
+    await markActionAsRedone(tenantId, action.id!)
     return { success: true, message: 'Action redone' }
   } catch (error) {
     console.error('Error redoing action:', error)

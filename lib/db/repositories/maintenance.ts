@@ -1,50 +1,40 @@
-import { getDatabase } from '../index'
+import { prisma } from '../index'
 
-const tablesToClear = [
-  'inbox_log',
-  'digests',
-  'people',
-  'projects',
-  'ideas',
-  'admin',
-]
-
-export function clearAllData(tenantId: string): { totalRemoved: number; removedByTable: Record<string, number> } {
-  const db = getDatabase()
+export async function clearAllData(tenantId: string): Promise<{ totalRemoved: number; removedByTable: Record<string, number> }> {
   const removedByTable: Record<string, number> = {}
+  let totalRemoved = 0
 
-  const clearTx = db.transaction(() => {
-    let totalRemoved = 0
-    const tablesToReset: string[] = []
+  await prisma.$transaction(async (tx) => {
+    // Clear inbox_log
+    const inboxLogCount = await tx.inboxLog.deleteMany({ where: { tenantId } })
+    removedByTable['inbox_log'] = inboxLogCount.count
+    totalRemoved += inboxLogCount.count
 
-    tablesToClear.forEach((table) => {
-      const countRow = db
-        .prepare(`SELECT COUNT(*) as count FROM ${table} WHERE tenant_id = ?`)
-        .get(tenantId) as { count: number }
-      const count = countRow?.count ?? 0
-      removedByTable[table] = count
-      totalRemoved += count
+    // Clear digests
+    const digestsCount = await tx.digest.deleteMany({ where: { tenantId } })
+    removedByTable['digests'] = digestsCount.count
+    totalRemoved += digestsCount.count
 
-      db.prepare(`DELETE FROM ${table} WHERE tenant_id = ?`).run(tenantId)
+    // Clear people
+    const peopleCount = await tx.person.deleteMany({ where: { tenantId } })
+    removedByTable['people'] = peopleCount.count
+    totalRemoved += peopleCount.count
 
-      const remainingRow = db
-        .prepare(`SELECT COUNT(*) as count FROM ${table}`)
-        .get() as { count: number }
-      if ((remainingRow?.count ?? 0) === 0) {
-        tablesToReset.push(table)
-      }
-    })
+    // Clear projects
+    const projectsCount = await tx.project.deleteMany({ where: { tenantId } })
+    removedByTable['projects'] = projectsCount.count
+    totalRemoved += projectsCount.count
 
-    if (tablesToReset.length > 0) {
-      const placeholders = tablesToReset.map(() => '?').join(', ')
-      db.prepare(`DELETE FROM sqlite_sequence WHERE name IN (${placeholders})`).run(
-        ...tablesToReset
-      )
-    }
+    // Clear ideas
+    const ideasCount = await tx.idea.deleteMany({ where: { tenantId } })
+    removedByTable['ideas'] = ideasCount.count
+    totalRemoved += ideasCount.count
 
-    return totalRemoved
+    // Clear admin
+    const adminCount = await tx.admin.deleteMany({ where: { tenantId } })
+    removedByTable['admin'] = adminCount.count
+    totalRemoved += adminCount.count
   })
 
-  const totalRemoved = clearTx()
   return { totalRemoved, removedByTable }
 }

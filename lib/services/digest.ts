@@ -8,7 +8,7 @@ import { getActiveRulePrompt } from '@/lib/db/repositories/rules'
 
 const aiProvider = process.env.AI_PROVIDER || 'openai'
 
-async function generateDigestWithAI(tenantId: string, prompt: string, operationType: 'daily' | 'weekly'): Promise<string> {
+async function generateDigestWithAI(tenantId: string, prompt: string, operationType: 'daily' | 'weekly' | 'custom'): Promise<string> {
   if (aiProvider === 'anthropic') {
     const apiKey = process.env.ANTHROPIC_API_KEY
     if (!apiKey) {
@@ -37,6 +37,7 @@ async function generateDigestWithAI(tenantId: string, prompt: string, operationT
     if (response.usage) {
       console.log('📊 Anthropic digest token usage:', response.usage)
       createTokenUsage(tenantId, {
+        tenantId, // Include tenantId in the record
         provider: 'anthropic',
         model,
         operationType: 'digest',
@@ -74,6 +75,7 @@ async function generateDigestWithAI(tenantId: string, prompt: string, operationT
     if (response.usage) {
       console.log('📊 OpenAI digest token usage:', response.usage)
       createTokenUsage(tenantId, {
+        tenantId, // Include tenantId in the record
         provider: 'openai',
         model,
         operationType: 'digest',

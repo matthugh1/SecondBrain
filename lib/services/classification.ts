@@ -196,7 +196,7 @@ async function classifyWithOpenAI(tenantId: string, messageText: string): Promis
       temperature: 0.3,
     })
 
-    responseText = response.choices[0]?.message?.content
+    responseText = response.choices[0]?.message?.content || undefined
     if (!responseText) {
       throw new Error('No response from OpenAI')
     }
@@ -245,6 +245,7 @@ async function classifyWithOpenAI(tenantId: string, messageText: string): Promis
     if (response.usage) {
       console.log('📊 OpenAI token usage:', response.usage)
       createTokenUsage(tenantId, {
+        tenantId, // Include tenantId in the record
         provider: 'openai',
         model,
         operationType: 'classification',
@@ -347,6 +348,7 @@ async function classifyWithAnthropic(tenantId: string, messageText: string): Pro
     if (response.usage) {
       console.log('📊 Anthropic token usage:', response.usage)
       createTokenUsage(tenantId, {
+        tenantId, // Include tenantId in the record
         provider: 'anthropic',
         model,
         operationType: 'classification',
