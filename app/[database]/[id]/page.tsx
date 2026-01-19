@@ -11,6 +11,7 @@ import InlineEditor from '@/components/InlineEditor'
 import Tags from '@/components/Tags'
 import RelatedItems from '@/components/RelatedItems'
 import { useDataUpdate } from '@/contexts/DataUpdateContext'
+import type { Category } from '@/types'
 
 export default function DatabaseItemPage() {
   const params = useParams()
@@ -154,14 +155,14 @@ export default function DatabaseItemPage() {
 
           {/* Tags */}
           <Tags
-            itemType={database}
+            itemType={database as Category}
             itemId={item.id}
             onTagsChange={fetchItem}
           />
 
           {/* Related Items */}
           <RelatedItems
-            itemType={database}
+            itemType={database as Category}
             itemId={item.id}
           />
           <dl className="grid grid-cols-1 gap-6">
