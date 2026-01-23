@@ -89,8 +89,6 @@ Return ONLY valid JSON, no markdown formatting.`
         })
       )
     )
-      )
-    )
 
     const content = response.choices[0]?.message?.content
     if (!content) {
