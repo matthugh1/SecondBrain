@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
@@ -13,7 +13,7 @@ interface Integration {
   errorCount: number
 }
 
-export default function IntegrationsPage() {
+function IntegrationsContent() {
   const [integrations, setIntegrations] = useState<Integration[]>([])
   const [loading, setLoading] = useState(true)
   const searchParams = useSearchParams()
@@ -275,5 +275,22 @@ export default function IntegrationsPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function IntegrationsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin mb-4"></div>
+            <p className="text-textMuted font-medium italic">Loading integrations...</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <IntegrationsContent />
+    </Suspense>
   )
 }
