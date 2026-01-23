@@ -263,7 +263,7 @@ model Admin {
   updatedAt         DateTime @updatedAt @map("updated_at")
 
   tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  parentTask        Admin?   @relation("TaskSubtasks", fields: [parentTaskId], references: [id])
+  parentTask        Admin?   @relation("TaskSubtasks", fields: [parentTaskId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   subTasks          Admin[]  @relation("TaskSubtasks")
   project           Project? @relation(fields: [projectId], references: [id])
   blockingDeps      TaskDependency[] @relation("BlockingTasks")
@@ -1216,8 +1216,8 @@ model TaskDependency {
   createdAt       DateTime @default(now()) @map("created_at")
 
   tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  task            Admin    @relation("BlockingTasks", fields: [taskId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  dependsOnTask   Admin    @relation("BlockedTasks", fields: [dependsOnTaskId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  task            Admin    @relation("BlockingTasks", fields: [taskId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  dependsOnTask   Admin    @relation("BlockedTasks", fields: [dependsOnTaskId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@unique([tenantId, taskId, dependsOnTaskId])
   @@index([tenantId, taskId])
