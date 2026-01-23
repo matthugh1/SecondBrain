@@ -17,11 +17,6 @@ export async function GET(request: NextRequest) {
     const startDateParam = searchParams.get('startDate')
     const endDateParam = searchParams.get('endDate')
 
-    // #region agent log
-    const fs = require('fs')
-    try{const logPath='/Users/matthewhughes/Documents/App_Folder/SecondBrain/.cursor/debug.log';const logEntry={location:'app/api/calendar/route.ts:14',message:'Calendar API GET request',data:{tenantId,today,upcoming,startDateParam,endDateParam},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'F'};fs.appendFileSync(logPath,JSON.stringify(logEntry)+'\n');}catch(e){}
-    // #endregion
-
     let events
 
     if (today) {
@@ -32,18 +27,9 @@ export async function GET(request: NextRequest) {
     } else {
       const startDate = startDateParam ? new Date(startDateParam) : undefined
       const endDate = endDateParam ? new Date(endDateParam) : undefined
-      // #region agent log
-      try{const logPath='/Users/matthewhughes/Documents/App_Folder/SecondBrain/.cursor/debug.log';const logEntry={location:'app/api/calendar/route.ts:28',message:'Fetching events with date range',data:{tenantId,startDate:startDate?.toISOString(),endDate:endDate?.toISOString()},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'F'};fs.appendFileSync(logPath,JSON.stringify(logEntry)+'\n');}catch(e){}
-      // #endregion
       events = await calendarRepo.getCalendarEvents(tenantId, startDate, endDate)
-      // #region agent log
-      try{const logPath='/Users/matthewhughes/Documents/App_Folder/SecondBrain/.cursor/debug.log';const logEntry={location:'app/api/calendar/route.ts:31',message:'Events fetched from repository',data:{eventsCount:events.length,firstEvent:events[0]?{id:events[0].id,subject:events[0].subject,startTime:events[0].startTime.toISOString()}:null},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'F'};fs.appendFileSync(logPath,JSON.stringify(logEntry)+'\n');}catch(e){}
-      // #endregion
     }
 
-    // #region agent log
-    try{const logPath='/Users/matthewhughes/Documents/App_Folder/SecondBrain/.cursor/debug.log';const logEntry={location:'app/api/calendar/route.ts:33',message:'Returning events response',data:{eventsCount:events.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'F'};fs.appendFileSync(logPath,JSON.stringify(logEntry)+'\n');}catch(e){}
-    // #endregion
     return NextResponse.json({ events })
   } catch (error) {
     console.error('Error fetching calendar events:', error)
