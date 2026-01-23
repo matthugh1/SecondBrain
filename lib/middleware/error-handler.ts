@@ -89,13 +89,17 @@ export function handleError(error: unknown, context?: string): NextResponse {
       })
     }
 
-    // Set tags for filtering
+    // Set tags for filtering and alerting
     if (isAppError(error)) {
       Sentry.setTag('error_code', error.code)
       Sentry.setTag('error_type', 'app_error')
     } else if (error instanceof Error) {
       Sentry.setTag('error_type', error.name || 'unknown')
     }
+
+    // Set alert tags for Sentry alert rules
+    Sentry.setTag('alert_triggered', 'true')
+    Sentry.setTag('error_context', context || 'unknown')
 
     // Capture exception in Sentry
     Sentry.captureException(error, {
