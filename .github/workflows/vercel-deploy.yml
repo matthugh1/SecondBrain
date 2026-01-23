@@ -94,8 +94,29 @@ jobs:
           PRISMA_DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.DIRECT_URL }}
 
+      - name: Baseline existing database (if needed)
+        id: baseline
+        run: |
+          # Check if this is the first migration (baseline) and database already has schema
+          BASELINE_MIGRATION=$(ls -1 prisma/migrations/ | grep -i baseline | head -1)
+          if [ -n "$BASELINE_MIGRATION" ]; then
+            echo "Baseline migration found: $BASELINE_MIGRATION"
+            # Try to mark baseline as applied (creates _prisma_migrations table if needed)
+            npx prisma migrate resolve --applied "$BASELINE_MIGRATION" 2>&1 && echo "baseline_applied=true" >> $GITHUB_OUTPUT || echo "baseline_applied=false" >> $GITHUB_OUTPUT
+          else
+            echo "baseline_applied=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+          PRISMA_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.DIRECT_URL }}
+        continue-on-error: true
+
       - name: Deploy migrations
-        if: steps.check-migrations.outputs.has_pending == 'true'
+        if: |
+          steps.check-migrations.outputs.has_pending == 'true' ||
+          steps.baseline.outputs.baseline_applied == 'true'
         run: npm run db:migrate:deploy
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}

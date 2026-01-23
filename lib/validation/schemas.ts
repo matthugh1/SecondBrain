@@ -143,7 +143,7 @@ export const createActionSchema = z.object({
     'notify',
     'schedule',
   ]),
-  targetType: z.enum(['person', 'project', 'idea', 'admin']).optional(),
+  targetType: z.enum(['people', 'projects', 'ideas', 'admin']).optional(),
   targetId: z.number().int().positive().optional(),
   parameters: z.record(z.any()).optional(),
   requiresApproval: z.boolean().optional(),
