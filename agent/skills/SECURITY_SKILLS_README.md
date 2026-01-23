@@ -171,6 +171,29 @@ These skills are designed to be used by Cursor AI when:
 - You ask for code review
 - You ask about security patterns
 
+### 🚀 deployment.md
+**Purpose**: Comprehensive deployment guide for CI/CD, migrations, and production releases
+
+**When to use**: When deploying, releasing, or making production changes
+
+**Covers**:
+- GitHub Actions CI/CD workflow
+- Database migration strategy
+- Pre-deployment checklist
+- Environment variable management
+- Rollback procedures
+- Troubleshooting deployment issues
+
+**Key Rules**:
+- ✅ Use `prisma migrate` for schema changes (never `db push` in production)
+- ✅ Run migrations before code deployment
+- ✅ Test locally before deploying
+- ✅ Review migration SQL before committing
+- ❌ Never use `prisma db push` in production
+- ❌ Never skip migration testing
+
+---
+
 ## Related Files
 
 - Validation schemas: `lib/validation/schemas.ts`
@@ -178,6 +201,8 @@ These skills are designed to be used by Cursor AI when:
 - Rate limiters: `lib/middleware/rate-limit.ts`
 - Auth utilities: `lib/auth/utils.ts`
 - Webhook verification: `lib/integrations/slack-verification.ts`
+- CI/CD workflow: `.github/workflows/vercel-deploy.yml`
+- Migration strategy: `DATABASE_MIGRATION_STRATEGY.md`
 
 ## Questions?
 
@@ -185,3 +210,8 @@ If you're unsure about a security pattern:
 1. Check the relevant skill file
 2. Look at existing secure routes (e.g., `app/api/capture/route.ts`)
 3. Ask Cursor to review using these skills
+
+If you're unsure about deployment:
+1. Check `deployment.md` for comprehensive guide
+2. Review `.github/workflows/vercel-deploy.yml` for workflow details
+3. Check `DATABASE_MIGRATION_STRATEGY.md` for migration best practices

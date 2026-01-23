@@ -47,7 +47,17 @@ Before committing, verify:
 
 **Reference**: See `multi-tenant-security.md` skill
 
-### 3. Request Validation
+### 3. Deployment Readiness
+- [ ] Schema changes have corresponding migration files
+- [ ] Migration files are committed (not just schema changes)
+- [ ] No `prisma db push` in build scripts or production code
+- [ ] `package.json` and `package-lock.json` are in sync
+- [ ] Build succeeds locally (`npm run build`)
+- [ ] TypeScript compiles without errors (`npx tsc --noEmit`)
+
+**Reference**: See `deployment.md` skill
+
+### 4. Request Validation
 - [ ] Zod schemas created for all POST/PATCH/PUT routes
 - [ ] `validateRequest` called before processing
 - [ ] Validated data used (not raw body)
