@@ -124,7 +124,9 @@ export async function executeWorkflow(
   })
 
   if (existingExecution) {
-    console.log(`✅ Workflow ${workflowId} already executed with same trigger data - returning existing result`)
+    const { getContextLogger } = await import('@/lib/logger/context')
+    const logger = getContextLogger()
+    logger.info({ workflowId }, 'Workflow already executed with same trigger data - returning existing result')
     const executedActions = existingExecution.executedActions 
       ? JSON.parse(existingExecution.executedActions) 
       : []
@@ -137,6 +139,7 @@ export async function executeWorkflow(
 
   const errors: string[] = []
   let executedCount = 0
+  const startTime = Date.now()
 
   // Execute each action within a transaction
   await prisma.$transaction(async (tx) => {

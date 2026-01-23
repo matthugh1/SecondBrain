@@ -7,8 +7,9 @@ import { handleError } from '@/lib/middleware/error-handler'
 import { captureSchema } from '@/lib/validation/schemas'
 import { setupRequestContext, addRequestIdToResponse } from '@/lib/middleware/request-id'
 import { setRequestContext } from '@/lib/logger/context'
+import { withMetrics } from '@/lib/middleware/metrics'
 
-export async function POST(request: NextRequest) {
+export const POST = withMetrics(async (request: NextRequest) => {
   try {
     // Set up request context for logging
     const requestId = setupRequestContext(request)
@@ -51,4 +52,4 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     return handleError(error, '/api/capture')
   }
-}
+})

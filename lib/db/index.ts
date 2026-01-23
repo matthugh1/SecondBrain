@@ -27,6 +27,23 @@ export const prisma =
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
 
+// Add Prisma middleware to track query metrics
+prisma.$use(async (params, next) => {
+  const start = Date.now()
+  try {
+    const result = await next(params)
+    const duration = Date.now() - start
+    const { recordDBQuery } = await import('@/lib/metrics')
+    recordDBQuery(`${params.model}.${params.action}`, duration, true)
+    return result
+  } catch (error) {
+    const duration = Date.now() - start
+    const { recordDBQuery } = await import('@/lib/metrics')
+    recordDBQuery(`${params.model}.${params.action}`, duration, false)
+    throw error
+  }
+})
+
 // Log connection pool info in development
 if (process.env.NODE_ENV === 'development') {
   const dbUrl = process.env.DATABASE_URL || process.env.PRISMA_DATABASE_URL

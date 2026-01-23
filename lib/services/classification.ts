@@ -220,6 +220,10 @@ async function classifyWithOpenAI(tenantId: string, messageText: string): Promis
   let result: ClassificationResult | undefined
 
   try {
+    // Track AI call metrics
+    const { recordAICall } = await import('@/lib/metrics')
+    const startTime = Date.now()
+    
     // Apply retry and timeout to AI API call
     const response = await retryAICall(() =>
       timeoutAICall(
@@ -236,6 +240,10 @@ async function classifyWithOpenAI(tenantId: string, messageText: string): Promis
         })
       )
     )
+
+    const durationMs = Date.now() - startTime
+    const tokens = response.usage?.total_tokens
+    recordAICall('openai', 'classification', true, durationMs, tokens, { tenantId: tenantId.substring(0, 8) + '...' })
 
     responseText = response.choices[0]?.message?.content || undefined
     if (!responseText) {
@@ -338,6 +346,10 @@ async function classifyWithAnthropic(tenantId: string, messageText: string): Pro
   let result: ClassificationResult | undefined
 
   try {
+    // Track AI call metrics
+    const { recordAICall } = await import('@/lib/metrics')
+    const startTime = Date.now()
+    
     // Apply retry and timeout to AI API call
     const response = await retryAICall(() =>
       timeoutAICall(
@@ -353,6 +365,10 @@ async function classifyWithAnthropic(tenantId: string, messageText: string): Pro
         })
       )
     )
+
+    const durationMs = Date.now() - startTime
+    const tokens = response.usage ? (response.usage.input_tokens || 0) + (response.usage.output_tokens || 0) : undefined
+    recordAICall('anthropic', 'classification', true, durationMs, tokens, { tenantId: tenantId.substring(0, 8) + '...' })
 
     const content = response.content[0]
     if (content.type !== 'text') {
@@ -423,18 +439,25 @@ async function classifyWithAnthropic(tenantId: string, messageText: string): Pro
     }
 
     return result
-  } catch (error) {
+  } catch (error: any) {
+    const errorMessage = error?.message || String(error)
+
+    // Record failed AI call
+    const { recordAICall } = await import('@/lib/metrics')
+    recordAICall('anthropic', 'classification', false, 0, undefined, { tenantId: tenantId.substring(0, 8) + '...', error: errorMessage })
+
     await recordClassificationAudit(tenantId, {
       message_text: messageText,
       provider: 'anthropic',
       model,
       prompt,
-      response_text: responseText,
-      parsed_result: result,
+      response_text: responseText || '',
+      parsed_result: undefined,
       status: 'error',
-      error_message: error instanceof Error ? error.message : 'Unknown error occurred',
+      error_message: errorMessage,
     })
-    throw error
+
+    throw new Error(`Anthropic classification failed: ${errorMessage}`)
   }
 }
 
