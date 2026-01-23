@@ -42,7 +42,9 @@ async function generateDigestWithAI(tenantId: string, prompt: string, operationT
 
     // Record token usage (non-blocking)
     if (response.usage) {
-      console.log('📊 Anthropic digest token usage:', response.usage)
+      const { getContextLogger } = await import('@/lib/logger/context')
+      const logger = getContextLogger()
+      logger.debug({ usage: response.usage }, 'Anthropic digest token usage')
       createTokenUsage(tenantId, {
         tenantId, // Include tenantId in the record
         provider: 'anthropic',
@@ -51,11 +53,15 @@ async function generateDigestWithAI(tenantId: string, prompt: string, operationT
         promptTokens: response.usage.input_tokens || 0,
         completionTokens: response.usage.output_tokens || 0,
         totalTokens: (response.usage.input_tokens || 0) + (response.usage.output_tokens || 0),
-      }).catch((err) => {
-        console.error('Failed to record token usage:', err)
+      }).catch(async (err) => {
+        const { getContextLogger } = await import('@/lib/logger/context')
+        const logger = getContextLogger()
+        logger.error({ error: err }, 'Failed to record token usage')
       })
     } else {
-      console.warn('⚠️ Anthropic digest response missing usage data')
+      const { getContextLogger } = await import('@/lib/logger/context')
+      const logger = getContextLogger()
+      logger.warn('Anthropic digest response missing usage data')
     }
 
     return content.text
@@ -85,7 +91,9 @@ async function generateDigestWithAI(tenantId: string, prompt: string, operationT
 
     // Record token usage (non-blocking)
     if (response.usage) {
-      console.log('📊 OpenAI digest token usage:', response.usage)
+      const { getContextLogger } = await import('@/lib/logger/context')
+      const logger = getContextLogger()
+      logger.debug({ usage: response.usage }, 'OpenAI digest token usage')
       createTokenUsage(tenantId, {
         tenantId, // Include tenantId in the record
         provider: 'openai',
@@ -94,11 +102,15 @@ async function generateDigestWithAI(tenantId: string, prompt: string, operationT
         promptTokens: response.usage.prompt_tokens || 0,
         completionTokens: response.usage.completion_tokens || 0,
         totalTokens: response.usage.total_tokens || 0,
-      }).catch((err) => {
-        console.error('Failed to record token usage:', err)
+      }).catch(async (err) => {
+        const { getContextLogger } = await import('@/lib/logger/context')
+        const logger = getContextLogger()
+        logger.error({ error: err }, 'Failed to record token usage')
       })
     } else {
-      console.warn('⚠️ OpenAI digest response missing usage data')
+      const { getContextLogger } = await import('@/lib/logger/context')
+      const logger = getContextLogger()
+      logger.warn('OpenAI digest response missing usage data')
     }
 
     return response.choices[0]?.message?.content || 'No response generated'
@@ -168,12 +180,16 @@ async function getDigestPrompt(
   try {
     prompt = await getActiveRulePrompt(tenantId, promptName)
   } catch (error) {
-    console.warn(`Error loading ${promptName} prompt from database, using fallback:`, error)
+    const { getContextLogger } = await import('@/lib/logger/context')
+    const logger = getContextLogger()
+    logger.warn({ error, promptName }, `Error loading ${promptName} prompt from database, using fallback`)
   }
 
   // If no database prompt, use hardcoded fallback
   if (!prompt) {
-    console.log(`📝 Using ${promptName.toUpperCase()} PROMPT from CODE (fallback)`)
+    const { getContextLogger } = await import('@/lib/logger/context')
+    const logger = getContextLogger()
+    logger.debug({ promptName }, `Using ${promptName.toUpperCase()} PROMPT from CODE (fallback)`)
     
     if (promptName === 'daily-digest') {
       return `You are a personal productivity assistant generating a daily digest. Analyze the following data and generate a concise summary.
@@ -251,7 +267,9 @@ RULES:
     }
   }
 
-  console.log(`📝 Using ${promptName.toUpperCase()} PROMPT from DATABASE`)
+  const { getContextLogger } = await import('@/lib/logger/context')
+  const logger = getContextLogger()
+  logger.debug({ promptName }, `Using ${promptName.toUpperCase()} PROMPT from DATABASE`)
   
   // Replace template variables in database prompt
   let finalPrompt = prompt.template
@@ -280,7 +298,9 @@ export async function generateDailyDigest(tenantId: string): Promise<void> {
       todayDate.setHours(0, 0, 0, 0)
       
       if (digestDate.getTime() === todayDate.getTime()) {
-        console.log(`✅ Daily digest already generated for ${tenantId} today - skipping`)
+        const { getContextLogger } = await import('@/lib/logger/context')
+        const logger = getContextLogger()
+        logger.info({ tenantId: tenantId.substring(0, 8) + '...' }, 'Daily digest already generated today - skipping')
         return
       }
     }
@@ -329,7 +349,9 @@ export async function generateDailyDigest(tenantId: string): Promise<void> {
       content: digest,
     })
   } catch (error) {
-    console.error('Error generating daily digest:', error)
+    const { getContextLogger } = await import('@/lib/logger/context')
+    const logger = getContextLogger()
+    logger.error({ error }, 'Error generating daily digest')
     throw error
   }
 }
@@ -350,7 +372,9 @@ export async function generateWeeklyReview(tenantId: string): Promise<void> {
       digestWeekStart.setDate(digestDate.getDate() - digestDate.getDay())
       
       if (digestWeekStart.getTime() === weekStart.getTime()) {
-        console.log(`✅ Weekly review already generated for ${tenantId} this week - skipping`)
+        const { getContextLogger } = await import('@/lib/logger/context')
+        const logger = getContextLogger()
+        logger.info({ tenantId: tenantId.substring(0, 8) + '...' }, 'Weekly review already generated this week - skipping')
         return
       }
     }
@@ -393,7 +417,9 @@ export async function generateWeeklyReview(tenantId: string): Promise<void> {
       content: review,
     })
   } catch (error) {
-    console.error('Error generating weekly review:', error)
+    const { getContextLogger } = await import('@/lib/logger/context')
+    const logger = getContextLogger()
+    logger.error({ error }, 'Error generating weekly review')
     throw error
   }
 }

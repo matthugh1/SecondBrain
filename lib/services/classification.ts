@@ -11,11 +11,13 @@ import { timeoutAICall } from '@/lib/utils/timeout'
 
 const aiProvider = process.env.AI_PROVIDER || 'openai'
 
-function recordClassificationAudit(tenantId: string, payload: Parameters<typeof createClassificationAudit>[1]): void {
+async function recordClassificationAudit(tenantId: string, payload: Parameters<typeof createClassificationAudit>[1]): Promise<void> {
   try {
-    createClassificationAudit(tenantId, payload)
+    await createClassificationAudit(tenantId, payload)
   } catch (error) {
-    console.error('Failed to record classification audit:', error)
+    const { getContextLogger } = await import('@/lib/logger/context')
+    const logger = getContextLogger()
+    logger.error({ error }, 'Failed to record classification audit')
   }
 }
 
@@ -45,7 +47,9 @@ ${examples}
 
 Please learn from these examples when classifying similar messages.\n`
   } catch (error) {
-    console.error('Failed to retrieve learning examples:', error)
+    const { getContextLogger } = await import('@/lib/logger/context')
+    const logger = getContextLogger()
+    logger.error({ error }, 'Failed to retrieve learning examples')
     return ''
   }
 }
@@ -58,15 +62,19 @@ async function getClassificationPrompt(tenantId: string, messageText: string): P
   try {
     prompt = await getActiveRulePrompt(tenantId, 'classification')
     settings = await getRuleSettings(tenantId)
-    console.log('🔍 Prompt lookup result:', { 
+    const { getContextLogger } = await import('@/lib/logger/context')
+    const logger = getContextLogger()
+    logger.debug({ 
       found: !!prompt, 
       promptId: prompt?.id, 
       promptName: prompt?.name, 
       promptActive: prompt?.active,
       templateLength: prompt?.template?.length 
-    })
+    }, 'Prompt lookup result')
   } catch (error) {
-    console.warn('❌ Error loading rules from database, using defaults:', error)
+    const { getContextLogger } = await import('@/lib/logger/context')
+    const logger = getContextLogger()
+    logger.warn({ error }, 'Error loading rules from database, using defaults')
   }
   
   // Get learning examples
@@ -77,7 +85,9 @@ async function getClassificationPrompt(tenantId: string, messageText: string): P
   try {
     calendarContext = await getCurrentMeetingContext(tenantId)
   } catch (error) {
-    console.warn('Failed to get calendar context:', error)
+    const { getContextLogger } = await import('@/lib/logger/context')
+    const logger = getContextLogger()
+    logger.warn({ error }, 'Failed to get calendar context')
   }
 
   // Get current date for relative date calculations
@@ -91,7 +101,9 @@ async function getClassificationPrompt(tenantId: string, messageText: string): P
   })
 
   if (!prompt) {
-    console.log('📝 Using CLASSIFICATION PROMPT from CODE (fallback)')
+    const { getContextLogger } = await import('@/lib/logger/context')
+    const logger = getContextLogger()
+    logger.debug('Using CLASSIFICATION PROMPT from CODE (fallback)')
     // Fallback to default if no prompt found
     const calendarContextStr = calendarContext ? `\n\nCALENDAR CONTEXT:\n${calendarContext}\n` : ''
     return `You are a classification system for a personal knowledge management system. Your job is to analyze the user's captured thought and return structured JSON.${learningExamples}
@@ -137,9 +149,6 @@ RULES:
 - For projects, default status to "${settings?.default_project_status || 'Active'}" unless clearly stated otherwise
 - For admin tasks, extract due dates if mentioned (e.g., "by Friday" = calculate date based on current date)`
   }
-  
-  console.log('📝 Using CLASSIFICATION PROMPT from DATABASE')
-  console.log('📋 Prompt template (first 500 chars):', prompt.template.substring(0, 500))
   
   // Replace placeholders in template
   const confidenceThreshold = settings?.confidence_threshold || 0.7
@@ -187,7 +196,9 @@ RULES:
     }
   }
   
-  console.log('📤 Final prompt being sent to LLM (first 500 chars):', finalPrompt.substring(0, 500))
+  const { getContextLogger } = await import('@/lib/logger/context')
+  const logger = getContextLogger()
+  logger.debug({ promptPreview: finalPrompt.substring(0, 500) }, 'Final prompt being sent to LLM')
   
   return finalPrompt
 }
@@ -202,7 +213,9 @@ async function classifyWithOpenAI(tenantId: string, messageText: string): Promis
 
   const model = 'gpt-4o-mini'
   const prompt = await getClassificationPrompt(tenantId, messageText)
-  console.log('🤖 Classifying message:', { messageText, promptLength: prompt.length })
+  const { getContextLogger } = await import('@/lib/logger/context')
+  const logger = getContextLogger()
+  logger.debug({ promptLength: prompt.length }, 'Classifying message')
   let responseText: string | undefined
   let result: ClassificationResult | undefined
 
@@ -237,7 +250,9 @@ async function classifyWithOpenAI(tenantId: string, messageText: string): Promis
 
     result = JSON.parse(jsonStr) as ClassificationResult
     
-    console.log('📊 Classification result (OpenAI):', { category: result.category, confidence: result.confidence, reasoning: result.reasoning })
+    const { getContextLogger } = await import('@/lib/logger/context')
+    const logger = getContextLogger()
+    logger.info({ category: result.category, confidence: result.confidence }, 'Classification result (OpenAI)')
 
     // Validate result against enabled categories from database
     try {
@@ -259,7 +274,7 @@ async function classifyWithOpenAI(tenantId: string, messageText: string): Promis
       result.confidence = 0.5 // Default if invalid
     }
 
-    recordClassificationAudit(tenantId, {
+    await recordClassificationAudit(tenantId, {
       message_text: messageText,
       provider: 'openai',
       model,
@@ -271,7 +286,9 @@ async function classifyWithOpenAI(tenantId: string, messageText: string): Promis
 
     // Record token usage (non-blocking)
     if (response.usage) {
-      console.log('📊 OpenAI token usage:', response.usage)
+      const { getContextLogger } = await import('@/lib/logger/context')
+      const logger = getContextLogger()
+      logger.debug({ usage: response.usage }, 'OpenAI token usage')
       createTokenUsage(tenantId, {
         tenantId, // Include tenantId in the record
         provider: 'openai',
@@ -280,16 +297,20 @@ async function classifyWithOpenAI(tenantId: string, messageText: string): Promis
         promptTokens: response.usage.prompt_tokens || 0,
         completionTokens: response.usage.completion_tokens || 0,
         totalTokens: response.usage.total_tokens || 0,
-      }).catch((err) => {
-        console.error('Failed to record token usage:', err)
+      }).catch(async (err) => {
+        const { getContextLogger } = await import('@/lib/logger/context')
+        const logger = getContextLogger()
+        logger.error({ error: err }, 'Failed to record token usage')
       })
     } else {
-      console.warn('⚠️ OpenAI response missing usage data')
+      const { getContextLogger } = await import('@/lib/logger/context')
+      const logger = getContextLogger()
+      logger.warn('OpenAI response missing usage data')
     }
 
     return result
   } catch (error) {
-    recordClassificationAudit(tenantId, {
+    await recordClassificationAudit(tenantId, {
       message_text: messageText,
       provider: 'openai',
       model,
@@ -367,7 +388,7 @@ async function classifyWithAnthropic(tenantId: string, messageText: string): Pro
       result.confidence = 0.5 // Default if invalid
     }
 
-    recordClassificationAudit(tenantId, {
+    await recordClassificationAudit(tenantId, {
       message_text: messageText,
       provider: 'anthropic',
       model,
@@ -379,7 +400,9 @@ async function classifyWithAnthropic(tenantId: string, messageText: string): Pro
 
     // Record token usage (non-blocking)
     if (response.usage) {
-      console.log('📊 Anthropic token usage:', response.usage)
+      const { getContextLogger } = await import('@/lib/logger/context')
+      const logger = getContextLogger()
+      logger.debug({ usage: response.usage }, 'Anthropic token usage')
       createTokenUsage(tenantId, {
         tenantId, // Include tenantId in the record
         provider: 'anthropic',
@@ -388,16 +411,20 @@ async function classifyWithAnthropic(tenantId: string, messageText: string): Pro
         promptTokens: response.usage.input_tokens || 0,
         completionTokens: response.usage.output_tokens || 0,
         totalTokens: (response.usage.input_tokens || 0) + (response.usage.output_tokens || 0),
-      }).catch((err) => {
-        console.error('Failed to record token usage:', err)
+      }).catch(async (err) => {
+        const { getContextLogger } = await import('@/lib/logger/context')
+        const logger = getContextLogger()
+        logger.error({ error: err }, 'Failed to record token usage')
       })
     } else {
-      console.warn('⚠️ Anthropic response missing usage data')
+      const { getContextLogger } = await import('@/lib/logger/context')
+      const logger = getContextLogger()
+      logger.warn('Anthropic response missing usage data')
     }
 
     return result
   } catch (error) {
-    recordClassificationAudit(tenantId, {
+    await recordClassificationAudit(tenantId, {
       message_text: messageText,
       provider: 'anthropic',
       model,
