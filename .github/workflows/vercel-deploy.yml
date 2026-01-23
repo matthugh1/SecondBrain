@@ -53,6 +53,58 @@ jobs:
         run: npx tsc --noEmit
         continue-on-error: true
 
+  migrate-database:
+    name: Run Database Migrations
+    runs-on: ubuntu-latest
+    if: |
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') &&
+      github.event_name != 'pull_request'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npm run db:generate
+
+      - name: Check for pending migrations
+        id: check-migrations
+        run: |
+          STATUS=$(npm run db:migrate:status 2>&1 || true)
+          echo "$STATUS"
+          if echo "$STATUS" | grep -q "Database schema is up to date"; then
+            echo "has_pending=false" >> $GITHUB_OUTPUT
+            echo "✅ Database schema is up to date - no migrations needed"
+          else
+            echo "has_pending=true" >> $GITHUB_OUTPUT
+            echo "⚠️ Pending migrations detected"
+          fi
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+
+      - name: Deploy migrations
+        if: steps.check-migrations.outputs.has_pending == 'true'
+        run: npm run db:migrate:deploy
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+
+      - name: Verify migration success
+        run: npm run db:migrate:status
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+
   deploy-preview:
     name: Deploy Preview (CLI)
     runs-on: ubuntu-latest
@@ -114,7 +166,7 @@ jobs:
     if: |
       (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') ||
       (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
-    needs: lint-and-test
+    needs: [lint-and-test, migrate-database]
     environment:
       name: production
       url: ${{ steps.deploy.outputs.deployment_url }}
