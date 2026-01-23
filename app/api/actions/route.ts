@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Execute immediately if requested and doesn't require approval
-    if (executeImmediately && (!requiresApproval || requiresApproval === false)) {
+    if (executeImmediately && requiresApproval !== true) {
       const result = await executeAction(tenantId, actionId, userId)
       if (!result.success) {
         return NextResponse.json(
