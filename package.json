@@ -5,8 +5,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "prisma generate && prisma db push --skip-generate --accept-data-loss && next build",
     "start": "next start",
+    "postinstall": "prisma generate",
     "lint": "next lint",
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate dev",
@@ -15,7 +16,18 @@
     "db:push": "prisma db push",
     "db:seed-calendar": "tsx prisma/seed-calendar.ts",
     "mcp:dev": "cd mcp-server && npm install && tsx index.ts",
-    "mcp:start": "cd mcp-server && npm install && tsx index.ts"
+    "mcp:start": "cd mcp-server && npm install && tsx index.ts",
+    "vercel:link": "vercel link",
+    "vercel:pull": "vercel pull",
+    "vercel:pull:preview": "vercel pull --environment=preview",
+    "vercel:pull:production": "vercel pull --environment=production",
+    "vercel:build": "vercel build",
+    "vercel:build:prod": "vercel build --prod",
+    "vercel:deploy": "vercel deploy",
+    "vercel:deploy:prod": "vercel deploy --prod",
+    "vercel:deploy:preview": "vercel pull --yes --environment=preview && vercel build && vercel deploy --prebuilt",
+    "vercel:deploy:production": "vercel pull --yes --environment=production && vercel build --prod && vercel deploy --prebuilt --prod",
+    "vercel:setup": "bash scripts/setup-vercel.sh"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.24.0",
