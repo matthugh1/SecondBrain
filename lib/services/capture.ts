@@ -282,7 +282,7 @@ export async function captureMessage(
     let destinationName: string | undefined
     let destinationUrl: string | undefined
     let recordId: string | undefined
-    let logId: number
+    let logId: number = 0 // Initialize to satisfy TypeScript (will always be assigned in transaction)
 
     await prisma.$transaction(async (tx) => {
       if (shouldFile) {
