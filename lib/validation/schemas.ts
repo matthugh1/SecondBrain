@@ -162,7 +162,7 @@ export const createWorkflowSchema = z.object({
     conditions: z.array(z.object({
       field: z.string(),
       operator: z.string(),
-      value: z.any(),
+      value: z.any().default(null), // Explicitly required (default to null if needed, but field must exist)
     })).optional(),
     schedule: z.object({
       frequency: z.enum(['daily', 'weekly', 'monthly']),

@@ -41,11 +41,13 @@ export async function POST(request: NextRequest) {
     const { data } = validation
     const { name, description, trigger, actions, priority, enabled } = data
 
+    // Type assertion: validation ensures trigger matches WorkflowTrigger structure
+    // but Zod infers value as optional due to z.any() behavior
     const workflowId = await workflowsRepo.createWorkflow(tenantId, {
       name,
       description,
-      trigger,
-      actions,
+      trigger: trigger as workflowsRepo.WorkflowTrigger,
+      actions: actions as workflowsRepo.WorkflowAction[],
       priority: priority || 0,
       enabled: enabled ?? true,
     })
