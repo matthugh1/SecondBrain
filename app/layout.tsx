@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
-import GlobalStatsBar from '@/components/GlobalStatsBar'
+import TopBar from '@/components/TopBar'
 import { Providers } from '@/components/Providers'
 import LayoutWithChat from '@/components/LayoutWithChat'
 
@@ -18,7 +18,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="flex flex-col h-screen overflow-hidden">
         <Providers>
-          <GlobalStatsBar />
+          <TopBar />
           <LayoutWithChat>
             {children}
           </LayoutWithChat>

@@ -5,6 +5,12 @@
   "description": "Epics and User Stories for transforming Second Brain into an agentic productivity platform",
   "phases": [
     {
+      "id": "phase-0",
+      "name": "Foundation & UX - Responsive Layout",
+      "weeks": "1-3",
+      "epics": ["EPIC-020"]
+    },
+    {
       "id": "phase-1",
       "name": "Foundation - Enhanced Intelligence Layer",
       "weeks": "1-4",
@@ -226,14 +232,24 @@
       "timeline": "Weeks 23-24",
       "storyPoints": 21,
       "file": "epics/EPIC-019-voice-multimodal-capture.md"
+    },
+    {
+      "id": "EPIC-020",
+      "name": "Responsive Layout & UX Improvements",
+      "phase": "phase-0",
+      "priority": "P0",
+      "timeline": "Weeks 1-3",
+      "storyPoints": 34,
+      "file": "epics/EPIC-020-responsive-layout-ux.md"
     }
   ],
   "summary": {
-    "totalEpics": 19,
-    "totalStoryPoints": 551,
+    "totalEpics": 20,
+    "totalStoryPoints": 585,
     "totalWeeks": 24,
-    "phases": 6,
+    "phases": 7,
     "priorityBreakdown": {
+      "P0": 1,
       "P1": 17,
       "P2": 2
     }

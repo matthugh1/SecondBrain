@@ -60,14 +60,32 @@ export async function getAdminById(tenantId: string, id: number): Promise<Admin 
 }
 
 export async function getAllAdmin(tenantId: string, includeArchived: boolean = false): Promise<Admin[]> {
-  const results = await prisma.admin.findMany({
-    where: {
-      tenantId,
-      ...(includeArchived ? {} : { archived: 0 }),
-    },
-    orderBy: { created: 'desc' },
-  })
-  return results.map(mapToAdmin)
+  try {
+    const results = await prisma.admin.findMany({
+      where: {
+        tenantId,
+        ...(includeArchived ? {} : { archived: 0 }),
+      },
+      orderBy: { created: 'desc' },
+    })
+    return results.map(mapToAdmin)
+  } catch (error) {
+    console.error('Error in getAllAdmin:', error)
+    // Try without orderBy if created field causes issues
+    try {
+      const results = await prisma.admin.findMany({
+        where: {
+          tenantId,
+          ...(includeArchived ? {} : { archived: 0 }),
+        },
+        orderBy: { id: 'desc' },
+      })
+      return results.map(mapToAdmin)
+    } catch (fallbackError) {
+      console.error('Error in getAllAdmin fallback:', fallbackError)
+      throw error // Throw original error
+    }
+  }
 }
 
 export async function getAdminByStatus(tenantId: string, status: AdminStatus): Promise<Admin[]> {
@@ -399,6 +417,6 @@ function mapToAdmin(result: any): Admin {
     parentTaskId: result.parentTaskId || undefined,
     projectId: result.projectId || undefined,
     assigneeId: result.assigneeId || undefined,
-    created: result.created.toISOString(),
+    created: result.created ? result.created.toISOString() : new Date().toISOString(),
   }
 }

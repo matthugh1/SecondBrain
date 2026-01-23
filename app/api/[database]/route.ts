@@ -35,24 +35,32 @@ export async function GET(
     const dueDate = searchParams.get('dueDate')
     let data: any[] = []
 
-    switch (database) {
-      case 'people':
-        data = await peopleRepo.getAllPeople(tenantId, includeArchived)
-        break
-      case 'projects':
-        data = await projectsRepo.getAllProjects(tenantId, includeArchived)
-        break
-      case 'ideas':
-        data = await ideasRepo.getAllIdeas(tenantId, includeArchived)
-        break
-      case 'admin':
-        // If dueDate filter is provided, use the specialized query function
-        if (dueDate) {
-          data = await adminRepo.getAdminTasksDueOnDate(tenantId, dueDate)
-        } else {
-          data = await adminRepo.getAllAdmin(tenantId, includeArchived)
-        }
-        break
+    try {
+      switch (database) {
+        case 'people':
+          data = await peopleRepo.getAllPeople(tenantId, includeArchived)
+          break
+        case 'projects':
+          data = await projectsRepo.getAllProjects(tenantId, includeArchived)
+          break
+        case 'ideas':
+          data = await ideasRepo.getAllIdeas(tenantId, includeArchived)
+          break
+        case 'admin':
+          // If dueDate filter is provided, use the specialized query function
+          if (dueDate) {
+            data = await adminRepo.getAdminTasksDueOnDate(tenantId, dueDate)
+          } else {
+            data = await adminRepo.getAllAdmin(tenantId, includeArchived)
+          }
+          break
+      }
+    } catch (dbError) {
+      console.error(`Database error fetching ${database}:`, dbError)
+      const errorMessage = dbError instanceof Error ? dbError.message : 'Unknown database error'
+      const errorStack = dbError instanceof Error ? dbError.stack : undefined
+      console.error('Database error details:', { errorMessage, errorStack, database, tenantId })
+      throw dbError // Re-throw to be caught by outer catch
     }
 
     // Apply filters
@@ -81,20 +89,29 @@ export async function GET(
     }
 
     // Get logIds for all items to enable fix functionality
-    const itemIds = data.map(item => item.id).filter((id): id is number => typeof id === 'number')
-    const logIdMap = await getLogIdsForItems(tenantId, database, itemIds)
-    
-    // Add logId to each item if it exists
-    const dataWithLogIds = data.map(item => ({
-      ...item,
-      logId: logIdMap[item.id] || null,
-    }))
+    try {
+      const itemIds = data.map(item => item.id).filter((id): id is number => typeof id === 'number')
+      const logIdMap = await getLogIdsForItems(tenantId, database, itemIds)
+      
+      // Add logId to each item if it exists
+      const dataWithLogIds = data.map(item => ({
+        ...item,
+        logId: logIdMap[item.id] || null,
+      }))
 
-    return NextResponse.json(dataWithLogIds)
+      return NextResponse.json(dataWithLogIds)
+    } catch (logIdError) {
+      // If logId lookup fails, return data without logIds rather than failing completely
+      console.error(`Error fetching logIds for ${database}:`, logIdError)
+      return NextResponse.json(data)
+    }
   } catch (error) {
     console.error(`Error fetching ${params.database}:`, error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const errorStack = error instanceof Error ? error.stack : undefined
+    console.error('Error details:', { errorMessage, errorStack })
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: errorMessage },
       { status: 500 }
     )
   }

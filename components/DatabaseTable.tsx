@@ -64,13 +64,32 @@ export default function DatabaseTable({
 
     const url = `/api/${database}${params.toString() ? '?' + params.toString() : ''}`
     fetch(url)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`Failed to fetch: ${res.statusText}`)
+        }
+        return res.json()
+      })
       .then((data) => {
-        setData(data)
+        // Ensure data is always an array
+        if (Array.isArray(data)) {
+          setData(data)
+        } else if (data && Array.isArray(data.items)) {
+          // Handle case where API returns { items: [...] }
+          setData(data.items)
+        } else if (data && Array.isArray(data.data)) {
+          // Handle case where API returns { data: [...] }
+          setData(data.data)
+        } else {
+          // If data is not an array, log error and set empty array
+          console.error('API returned non-array data:', data)
+          setData([])
+        }
         setLoading(false)
       })
       .catch((err) => {
         console.error('Error fetching data:', err)
+        setData([])
         setLoading(false)
       })
   }

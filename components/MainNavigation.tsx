@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 
 interface NavItem {
   href: string
@@ -16,8 +16,14 @@ interface NavGroup {
   defaultOpen?: boolean
 }
 
-export default function MainNavigation() {
+interface MainNavigationProps {
+  onClose?: () => void
+  isMobile?: boolean
+}
+
+export default function MainNavigation({ onClose, isMobile = false }: MainNavigationProps) {
   const pathname = usePathname()
+  const [searchQuery, setSearchQuery] = useState('')
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
     databases: true,
     productivity: true,
@@ -212,59 +218,167 @@ export default function MainNavigation() {
     },
   ]
 
-  return (
-    <nav className="w-64 flex-shrink-0 border-r border-border bg-surfaceElevated flex flex-col overflow-y-auto">
-      <div className="p-4">
-        <div className="mb-6">
-          <h2 className="text-xs font-bold text-textMuted uppercase tracking-widest mb-4">
-            Navigation
-          </h2>
-        </div>
-        <div className="space-y-1">
-          {navGroups.map((group, groupIndex) => {
-            const groupKey = group.label.toLowerCase().replace(/\s+/g, '-')
-            const isOpen = openGroups[groupKey] ?? group.defaultOpen ?? true
+  // Flatten all nav items for search
+  const allNavItems = useMemo(() => {
+    return navGroups.flatMap(group =>
+      group.items.map(item => ({ ...item, group: group.label }))
+    )
+  }, [])
 
-            return (
-              <div key={groupIndex} className="mb-4">
-                <button
-                  onClick={() => toggleGroup(groupKey)}
-                  className="w-full flex items-center justify-between px-2 py-2 text-xs font-bold text-textMuted uppercase tracking-widest hover:text-textPrimary transition-colors"
-                >
-                  <span>{group.label}</span>
-                  <svg
-                    className={`w-4 h-4 transition-transform ${isOpen ? 'transform rotate-90' : ''}`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-                {isOpen && (
-                  <div className="mt-1 space-y-1">
-                    {group.items.map((item) => {
-                      const active = isActive(item.href)
-                      return (
-                        <Link
-                          key={item.href}
-                          href={item.href}
-                          className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                            active
-                              ? 'bg-primary text-textPrimary shadow-lg shadow-primary/20'
-                              : 'text-textMuted hover:bg-surface hover:text-textPrimary'
-                          }`}
-                        >
-                          {item.icon}
-                          <span>{item.label}</span>
-                        </Link>
-                      )
-                    })}
-                  </div>
-                )}
+  // Filter groups based on search
+  const filteredGroups = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return navGroups
+    }
+
+    const query = searchQuery.toLowerCase()
+    const filtered = navGroups.map(group => ({
+      ...group,
+      items: group.items.filter(item =>
+        item.label.toLowerCase().includes(query) ||
+        item.href.toLowerCase().includes(query)
+      )
+    })).filter(group => group.items.length > 0)
+
+    return filtered
+  }, [searchQuery, navGroups])
+
+  // Highlight matching text
+  const highlightText = (text: string, query: string) => {
+    if (!query.trim()) return text
+    const parts = text.split(new RegExp(`(${query})`, 'gi'))
+    return parts.map((part, index) =>
+      part.toLowerCase() === query.toLowerCase() ? (
+        <mark key={index} className="bg-primary/30 text-textPrimary px-0.5 rounded">
+          {part}
+        </mark>
+      ) : (
+        part
+      )
+    )
+  }
+
+  const handleItemClick = () => {
+    if (isMobile && onClose) {
+      onClose()
+    }
+  }
+
+  return (
+    <nav className="w-64 flex-shrink-0 border-r border-border bg-surfaceElevated flex flex-col overflow-y-auto h-full">
+      <div className="p-4 flex flex-col h-full">
+        {/* Mobile header with close button */}
+        {isMobile && (
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-textPrimary">Navigation</h2>
+            <button
+              onClick={onClose}
+              className="p-2 rounded-lg hover:bg-surface transition-colors"
+              aria-label="Close Navigation"
+            >
+              <svg className="w-5 h-5 text-textMuted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        )}
+
+        {/* Search Input */}
+        <div className="mb-4">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search navigation..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  setSearchQuery('')
+                }
+              }}
+              className="w-full px-3 py-2 pl-10 bg-surface border border-border/60 rounded-lg text-sm text-textPrimary placeholder-textMuted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
+            />
+            <svg
+              className="absolute left-3 top-2.5 w-4 h-4 text-textMuted"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2 top-2 p-1 rounded hover:bg-surfaceElevated transition-colors"
+                aria-label="Clear search"
+              >
+                <svg className="w-4 h-4 text-textMuted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Navigation Groups */}
+        <div className="flex-1 overflow-y-auto space-y-1">
+          {filteredGroups.length === 0 && searchQuery ? (
+            <div className="text-center py-12">
+              <div className="w-12 h-12 rounded-full bg-surfaceElevated flex items-center justify-center mb-4 border border-border mx-auto">
+                <svg className="w-6 h-6 text-textMuted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
               </div>
-            )
-          })}
+              <p className="font-medium text-textPrimary mb-1">No results found</p>
+              <p className="text-sm text-textMuted">Try a different search term</p>
+            </div>
+          ) : (
+            filteredGroups.map((group, groupIndex) => {
+              const groupKey = group.label.toLowerCase().replace(/\s+/g, '-')
+              const isOpen = openGroups[groupKey] ?? group.defaultOpen ?? true
+
+              return (
+                <div key={groupIndex} className="mb-4">
+                  <button
+                    onClick={() => toggleGroup(groupKey)}
+                    className="w-full flex items-center justify-between px-2 py-2 text-xs font-bold text-textMuted uppercase tracking-widest hover:text-textPrimary transition-colors rounded-lg hover:bg-surface/50"
+                  >
+                    <span>{group.label}</span>
+                    <svg
+                      className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'transform rotate-90' : ''}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                  {isOpen && (
+                    <div className="mt-1 space-y-1">
+                      {group.items.map((item) => {
+                        const active = isActive(item.href)
+                        return (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            onClick={handleItemClick}
+                            className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                              active
+                                ? 'bg-primary text-textPrimary shadow-lg shadow-primary/20'
+                                : 'text-textMuted hover:bg-surface hover:text-textPrimary hover:translate-x-0.5'
+                            }`}
+                          >
+                            {item.icon}
+                            <span>{highlightText(item.label, searchQuery)}</span>
+                          </Link>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )
+            })
+          )}
         </div>
       </div>
     </nav>

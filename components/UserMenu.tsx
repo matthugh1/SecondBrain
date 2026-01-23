@@ -30,9 +30,6 @@ export default function UserMenu() {
   return (
     <div className="flex items-center gap-4">
       <div className="flex flex-col items-end">
-        <span className="text-[10px] font-bold text-textMuted uppercase tracking-widest">
-          Node Operator
-        </span>
         <span className="text-sm font-black text-textPrimary tracking-tight">
           {session.user?.email}
         </span>
