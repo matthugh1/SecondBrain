@@ -96,21 +96,28 @@ Return ONLY a JSON array, no markdown formatting. Example:
 
 If no action items, return empty array [].`
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a helpful assistant that extracts action items from emails. Always return valid JSON.',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      temperature: 0.7,
-      response_format: { type: 'json_object' },
-    })
+    const { retryAICall } = await import('@/lib/utils/retry')
+    const { timeoutAICall } = await import('@/lib/utils/timeout')
+    // Apply retry and timeout to AI API call
+    const response = await retryAICall(() =>
+      timeoutAICall(
+        openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a helpful assistant that extracts action items from emails. Always return valid JSON.',
+            },
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+          temperature: 0.7,
+          response_format: { type: 'json_object' },
+        })
+      )
+    )
 
     const content = response.choices[0]?.message?.content
     if (!content) return
@@ -157,8 +164,9 @@ export async function fetchEmailsFromGmail(
     throw new Error('No access token available')
   }
 
-  // Fetch messages from Gmail API
-  const messagesResponse = await fetch(
+  // Fetch messages from Gmail API (with retry and timeout)
+  const { fetchWithRetryAndTimeout } = await import('@/lib/utils/timeout')
+  const messagesResponse = await fetchWithRetryAndTimeout(
     `https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=${maxResults}`,
     {
       headers: {
@@ -177,8 +185,9 @@ export async function fetchEmailsFromGmail(
   // Process each message
   for (const message of messages) {
     try {
-      // Get full message details
-      const messageResponse = await fetch(
+      // Get full message details (with retry and timeout)
+      const { fetchWithRetryAndTimeout } = await import('@/lib/utils/timeout')
+      const messageResponse = await fetchWithRetryAndTimeout(
         `https://gmail.googleapis.com/gmail/v1/users/me/messages/${message.id}`,
         {
           headers: {

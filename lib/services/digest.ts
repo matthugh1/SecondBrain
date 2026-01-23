@@ -5,6 +5,8 @@ import { getActiveProjects } from '@/lib/db/repositories/projects'
 import * as digestsRepo from '@/lib/db/repositories/digests'
 import { createTokenUsage } from '@/lib/db/repositories/token-usage'
 import { getActiveRulePrompt } from '@/lib/db/repositories/rules'
+import { retryAICall } from '@/lib/utils/retry'
+import { timeoutAICall } from '@/lib/utils/timeout'
 
 const aiProvider = process.env.AI_PROVIDER || 'openai'
 
@@ -17,16 +19,21 @@ async function generateDigestWithAI(tenantId: string, prompt: string, operationT
 
     const anthropic = new Anthropic({ apiKey })
     const model = 'claude-3-5-haiku-20241022'
-    const response = await anthropic.messages.create({
-      model,
-      max_tokens: 1024,
-      messages: [
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-    })
+    // Apply retry and timeout to AI API call
+    const response = await retryAICall(() =>
+      timeoutAICall(
+        anthropic.messages.create({
+          model,
+          max_tokens: 1024,
+          messages: [
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+        })
+      )
+    )
 
     const content = response.content[0]
     if (content.type !== 'text') {
@@ -60,16 +67,21 @@ async function generateDigestWithAI(tenantId: string, prompt: string, operationT
 
     const openai = new OpenAI({ apiKey })
     const model = 'gpt-4o-mini'
-    const response = await openai.chat.completions.create({
-      model,
-      messages: [
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      temperature: 0.7,
-    })
+    // Apply retry and timeout to AI API call
+    const response = await retryAICall(() =>
+      timeoutAICall(
+        openai.chat.completions.create({
+          model,
+          messages: [
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+          temperature: 0.7,
+        })
+      )
+    )
 
     // Record token usage (non-blocking)
     if (response.usage) {
@@ -254,6 +266,25 @@ RULES:
 
 export async function generateDailyDigest(tenantId: string): Promise<void> {
   try {
+    // IDEMPOTENCY: Check if digest already generated for today
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const todayStart = today.toISOString()
+    const todayEnd = new Date(today.getTime() + 24 * 60 * 60 * 1000).toISOString()
+    
+    const existingDigest = await digestsRepo.getLatestDigest(tenantId, 'daily')
+    if (existingDigest && existingDigest.created) {
+      const digestDate = new Date(existingDigest.created)
+      digestDate.setHours(0, 0, 0, 0)
+      const todayDate = new Date(today)
+      todayDate.setHours(0, 0, 0, 0)
+      
+      if (digestDate.getTime() === todayDate.getTime()) {
+        console.log(`✅ Daily digest already generated for ${tenantId} today - skipping`)
+        return
+      }
+    }
+
     // Get items from last 24 hours
     const now = new Date()
     const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000)
@@ -305,8 +336,26 @@ export async function generateDailyDigest(tenantId: string): Promise<void> {
 
 export async function generateWeeklyReview(tenantId: string): Promise<void> {
   try {
-    // Get items from last 7 days
+    // IDEMPOTENCY: Check if weekly review already generated for this week
     const now = new Date()
+    const weekStart = new Date(now)
+    weekStart.setDate(now.getDate() - now.getDay()) // Start of week (Sunday)
+    weekStart.setHours(0, 0, 0, 0)
+    
+    const existingDigest = await digestsRepo.getLatestDigest(tenantId, 'weekly')
+    if (existingDigest && existingDigest.created) {
+      const digestDate = new Date(existingDigest.created)
+      digestDate.setHours(0, 0, 0, 0)
+      const digestWeekStart = new Date(digestDate)
+      digestWeekStart.setDate(digestDate.getDate() - digestDate.getDay())
+      
+      if (digestWeekStart.getTime() === weekStart.getTime()) {
+        console.log(`✅ Weekly review already generated for ${tenantId} this week - skipping`)
+        return
+      }
+    }
+
+    // Get items from last 7 days
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
     const startDate = weekAgo.toISOString()
     const endDate = now.toISOString()

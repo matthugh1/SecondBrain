@@ -2,6 +2,10 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from './config'
 import { prisma } from '@/lib/db'
 import { NextResponse } from 'next/server'
+import {
+  extractServiceAccountToken,
+  validateServiceAccountToken,
+} from './service-account'
 
 export async function getSession() {
   return await getServerSession(authOptions)
@@ -63,37 +67,63 @@ export async function verifyTenantAccess(tenantId: string, userId: string): Prom
 export async function requireTenantOrApiKey(
   request: Request,
   body?: { tenantId?: string }
-): Promise<{ tenantId: string; userId?: string } | NextResponse> {
-  // Check for API key authentication first
+): Promise<{ tenantId: string; userId?: string; serviceAccountId?: number } | NextResponse> {
   const authHeader = request.headers.get('authorization')
+  
   if (authHeader?.startsWith('Bearer ')) {
+    // Check for service account token first (sa_...)
+    const serviceAccountToken = extractServiceAccountToken(authHeader)
+    if (serviceAccountToken) {
+      const validation = await validateServiceAccountToken(serviceAccountToken)
+      if (validation) {
+        // Service account token is valid - return tenantId
+        return {
+          tenantId: validation.tenantId,
+          serviceAccountId: validation.serviceAccountId,
+        }
+      }
+      // Invalid or revoked service account token
+      return NextResponse.json(
+        { error: 'Invalid or revoked service account token' },
+        { status: 401 }
+      )
+    }
+
+    // Legacy API key support (for backward compatibility, but deprecated)
+    // TODO: Remove this once all MCP servers use service accounts
     const apiKey = authHeader.substring(7)
     const expectedApiKey = process.env.MCP_API_KEY
     
     if (expectedApiKey && apiKey === expectedApiKey) {
-      // API key is valid - try to get tenantId from request body or session
-      let tenantId: string | null = null
+      // SECURITY: Legacy API key auth requires session-based tenant lookup
+      // DO NOT accept tenantId from request body - it could be spoofed
+      const session = await getSession()
       
-      // First, try to get from request body if provided
-      if (body?.tenantId) {
-        tenantId = body.tenantId
-      } else {
-        // Fall back to session if available
-        const session = await getSession()
-        if (session?.user?.id) {
-          tenantId = await getActiveTenantId()
-        }
+      if (!session?.user?.id) {
+        return NextResponse.json(
+          { error: 'Legacy API key authentication requires an active session. Please use service account tokens instead.' },
+          { status: 401 }
+        )
       }
-      
-      if (tenantId) {
-        return { tenantId }
+
+      const tenantId = await getActiveTenantId()
+      if (!tenantId) {
+        return NextResponse.json(
+          { error: 'No active tenant found for user' },
+          { status: 403 }
+        )
       }
-      
-      // If no tenantId found, return error
-      return NextResponse.json(
-        { error: 'API key authentication requires tenantId in request body or an active session' },
-        { status: 403 }
-      )
+
+      // Verify user has access to this tenant
+      const hasAccess = await verifyTenantAccess(tenantId, session.user.id)
+      if (!hasAccess) {
+        return NextResponse.json(
+          { error: 'User does not have access to tenant' },
+          { status: 403 }
+        )
+      }
+
+      return { tenantId, userId: session.user.id }
     }
   }
   

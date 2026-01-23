@@ -1,5 +1,7 @@
 import OpenAI from 'openai'
 import Anthropic from '@anthropic-ai/sdk'
+import { retryAICall } from '@/lib/utils/retry'
+import { timeoutAICall } from '@/lib/utils/timeout'
 
 const aiProvider = process.env.AI_PROVIDER || 'openai'
 
@@ -65,17 +67,22 @@ EXAMPLES:
 "I need to finish the report" → {"isQuery": false, "type": null, "date": null}`
 
   try {
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      response_format: { type: 'json_object' },
-      temperature: 0.1,
-    })
+    // Apply retry and timeout to AI API call
+    const response = await retryAICall(() =>
+      timeoutAICall(
+        openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+          response_format: { type: 'json_object' },
+          temperature: 0.1,
+        })
+      )
+    )
 
     const responseText = response.choices[0]?.message?.content
     if (!responseText) {
@@ -154,16 +161,21 @@ EXAMPLES:
 "I need to finish the report" → {"isQuery": false, "type": null, "date": null}`
 
   try {
-    const response = await anthropic.messages.create({
-      model: 'claude-3-5-haiku-20241022',
-      max_tokens: 256,
-      messages: [
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-    })
+    // Apply retry and timeout to AI API call
+    const response = await retryAICall(() =>
+      timeoutAICall(
+        anthropic.messages.create({
+          model: 'claude-3-5-haiku-20241022',
+          max_tokens: 256,
+          messages: [
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+        })
+      )
+    )
 
     const content = response.content[0]
     if (content.type !== 'text') {
@@ -267,11 +279,16 @@ Return ONLY JSON:
   try {
     if (aiProvider === 'anthropic') {
       const anthropic = new Anthropic({ apiKey })
-      const response = await anthropic.messages.create({
-        model: 'claude-3-5-haiku-20241022',
-        max_tokens: 128,
-        messages: [{ role: 'user', content: prompt }],
-      })
+      // Apply retry and timeout to AI API call
+      const response = await retryAICall(() =>
+        timeoutAICall(
+          anthropic.messages.create({
+            model: 'claude-3-5-haiku-20241022',
+            max_tokens: 128,
+            messages: [{ role: 'user', content: prompt }],
+          })
+        )
+      )
 
       const content = response.content[0]
       if (content.type === 'text') {
@@ -284,12 +301,17 @@ Return ONLY JSON:
       }
     } else {
       const openai = new OpenAI({ apiKey })
-      const response = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [{ role: 'user', content: prompt }],
-        response_format: { type: 'json_object' },
-        temperature: 0.1,
-      })
+      // Apply retry and timeout to AI API call
+      const response = await retryAICall(() =>
+        timeoutAICall(
+          openai.chat.completions.create({
+            model: 'gpt-4o-mini',
+            messages: [{ role: 'user', content: prompt }],
+            response_format: { type: 'json_object' },
+            temperature: 0.1,
+          })
+        )
+      )
 
       const content = response.choices[0]?.message?.content
       if (content) {

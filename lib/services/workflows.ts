@@ -1,6 +1,7 @@
 import * as workflowsRepo from '@/lib/db/repositories/workflows'
 import * as actionsRepo from '@/lib/db/repositories/actions'
 import { executeAction } from './actions'
+import { prisma } from '@/lib/db'
 import type { Category } from '@/types'
 
 /**
@@ -82,6 +83,17 @@ function evaluateCondition(fieldValue: any, operator: string, expectedValue: any
 }
 
 /**
+ * Generate idempotency key for workflow execution
+ */
+function generateIdempotencyKey(workflowId: number, triggerData?: Record<string, any>): string {
+  const crypto = require('crypto')
+  const triggerHash = triggerData 
+    ? crypto.createHash('sha256').update(JSON.stringify(triggerData)).digest('hex').substring(0, 16)
+    : 'default'
+  return `wf_${workflowId}_${triggerHash}`
+}
+
+/**
  * Execute workflow actions
  */
 export async function executeWorkflow(
@@ -95,43 +107,76 @@ export async function executeWorkflow(
     return { success: false, executedActions: 0, errors: ['Workflow not found or disabled'] }
   }
 
-  const errors: string[] = []
-  let executedCount = 0
+  // IDEMPOTENCY: Check for existing execution with same idempotency key
+  const idempotencyKey = generateIdempotencyKey(workflowId, triggerData)
+  const { prisma } = await import('@/lib/db')
+  const existingExecution = await prisma.workflowExecution.findFirst({
+    where: {
+      idempotencyKey,
+      tenantId,
+      workflowId,
+      // Only consider executions within last hour as duplicates
+      executedAt: {
+        gte: new Date(Date.now() - 60 * 60 * 1000),
+      },
+    },
+    orderBy: { executedAt: 'desc' },
+  })
 
-  // Execute each action
-  for (const actionDef of workflow.actions) {
-    try {
-      // Resolve parameters with trigger data
-      const resolvedParameters = resolveActionParameters(actionDef.parameters, triggerData || {})
-
-      const actionId = await actionsRepo.createAction(tenantId, {
-        userId,
-        actionType: actionDef.actionType as actionsRepo.ActionType,
-        targetType: actionDef.targetType as Category | undefined,
-        parameters: resolvedParameters,
-        requiresApproval: false, // Workflow actions execute automatically
-      })
-
-      const result = await executeAction(tenantId, actionId, userId)
-      if (result.success) {
-        executedCount++
-      } else {
-        errors.push(`Action ${actionDef.actionType} failed: ${result.error}`)
-      }
-    } catch (error: any) {
-      errors.push(`Error executing ${actionDef.actionType}: ${error.message}`)
+  if (existingExecution) {
+    console.log(`✅ Workflow ${workflowId} already executed with same trigger data - returning existing result`)
+    const executedActions = existingExecution.executedActions 
+      ? JSON.parse(existingExecution.executedActions) 
+      : []
+    return {
+      success: existingExecution.status === 'success',
+      executedActions: Array.isArray(executedActions) ? executedActions.length : 0,
+      errors: existingExecution.errorMessage ? [existingExecution.errorMessage] : undefined,
     }
   }
 
-  // Record execution
-  await workflowsRepo.recordWorkflowExecution(
-    tenantId,
-    workflowId,
-    errors.length === 0 ? 'success' : 'failed',
-    triggerData,
-    workflow.actions,
-    errors.length > 0 ? errors.join('; ') : undefined
-  )
+  const errors: string[] = []
+  let executedCount = 0
+
+  // Execute each action within a transaction
+  await prisma.$transaction(async (tx) => {
+    for (const actionDef of workflow.actions) {
+      try {
+        // Resolve parameters with trigger data
+        const resolvedParameters = resolveActionParameters(actionDef.parameters, triggerData || {})
+
+        const actionId = await actionsRepo.createAction(tenantId, {
+          userId,
+          actionType: actionDef.actionType as actionsRepo.ActionType,
+          targetType: actionDef.targetType as Category | undefined,
+          parameters: resolvedParameters,
+          requiresApproval: false, // Workflow actions execute automatically
+        })
+
+        const result = await executeAction(tenantId, actionId, userId)
+        if (result.success) {
+          executedCount++
+        } else {
+          errors.push(`Action ${actionDef.actionType} failed: ${result.error}`)
+        }
+      } catch (error: any) {
+        errors.push(`Error executing ${actionDef.actionType}: ${error.message}`)
+      }
+    }
+
+    // Record execution within transaction
+    await tx.workflowExecution.create({
+      data: {
+        tenantId,
+        workflowId,
+        status: errors.length === 0 ? 'success' : 'failed',
+        triggerData: triggerData ? JSON.stringify(triggerData) : null,
+        executedActions: workflow.actions ? JSON.stringify(workflow.actions) : null,
+        errorMessage: errors.length > 0 ? errors.join('; ') : null,
+        idempotencyKey,
+      },
+    })
+  })
 
   return {
     success: errors.length === 0,

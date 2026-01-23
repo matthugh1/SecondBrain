@@ -10,6 +10,7 @@ import { formatMeetingContextForItem } from './calendar-context'
 import { generateAndStoreEmbedding } from './semantic-search'
 import { detectRelationshipsForItem } from './relationship-engine'
 import * as userAnalyticsRepo from '@/lib/db/repositories/user-analytics'
+import { prisma } from '@/lib/db'
 import type { Category, Person, Project, Idea, Admin } from '@/types'
 
 export interface CaptureResult {
@@ -277,53 +278,57 @@ export async function captureMessage(
       ? classification.category
       : 'Needs Review'
 
+    // TRANSACTION: Create record and inbox log atomically
     let destinationName: string | undefined
     let destinationUrl: string | undefined
     let recordId: string | undefined
+    let logId: number
 
-    if (shouldFile) {
-      // Check if user is currently in a meeting
-      let meetingContext: string | undefined
-      try {
-        const currentMeeting = await calendarRepo.getCurrentMeeting(tenantId)
-        if (currentMeeting) {
-          meetingContext = formatMeetingContextForItem(currentMeeting)
+    await prisma.$transaction(async (tx) => {
+      if (shouldFile) {
+        // Check if user is currently in a meeting
+        let meetingContext: string | undefined
+        try {
+          const currentMeeting = await calendarRepo.getCurrentMeeting(tenantId)
+          if (currentMeeting) {
+            meetingContext = formatMeetingContextForItem(currentMeeting)
+          }
+        } catch (error) {
+          console.warn('Failed to get current meeting for context:', error)
+          // Continue without meeting context if there's an error
         }
-      } catch (error) {
-        console.warn('Failed to get current meeting for context:', error)
-        // Continue without meeting context if there's an error
+        
+        // Create the record in the appropriate database
+        const result = await createRecord(tenantId, classification.category, classification.fields, meetingContext)
+        destinationName = result.name
+        destinationUrl = result.url
+        recordId = result.id.toString()
       }
-      
-      // Create the record in the appropriate database
-      const result = await createRecord(tenantId, classification.category, classification.fields, meetingContext)
-      destinationName = result.name
-      destinationUrl = result.url
-      recordId = result.id.toString()
-    }
 
-    // Log to inbox_log
-    const logId = await inboxLogRepo.createInboxLog(tenantId, {
-      original_text: messageText,
-      filed_to: filedTo,
-      destination_name: destinationName,
-      destination_url: destinationUrl,
-      confidence: classification.confidence,
-      status: shouldFile ? 'Filed' : 'Needs Review',
-      created: new Date().toISOString(),
-      notion_record_id: recordId,
-    })
-
-    // For "Needs Review" items, create a link to the inbox log entry
-    if (!shouldFile) {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-      destinationUrl = `${baseUrl}/inbox-log?highlight=${logId}`
-      destinationName = 'Review in Inbox Log'
-      // Update the inbox log with the correct URL
-      await inboxLogRepo.updateInboxLog(tenantId, logId, {
-        destination_url: destinationUrl,
+      // Log to inbox_log (within transaction)
+      logId = await inboxLogRepo.createInboxLog(tenantId, {
+        original_text: messageText,
+        filed_to: filedTo,
         destination_name: destinationName,
+        destination_url: destinationUrl,
+        confidence: classification.confidence,
+        status: shouldFile ? 'Filed' : 'Needs Review',
+        created: new Date().toISOString(),
+        notion_record_id: recordId,
       })
-    }
+
+      // For "Needs Review" items, create a link to the inbox log entry (within transaction)
+      if (!shouldFile) {
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+        destinationUrl = `${baseUrl}/inbox-log?highlight=${logId}`
+        destinationName = 'Review in Inbox Log'
+        // Update the inbox log with the correct URL
+        await inboxLogRepo.updateInboxLog(tenantId, logId, {
+          destination_url: destinationUrl,
+          destination_name: destinationName,
+        })
+      }
+    })
 
     // Track analytics if userId is provided
     if (userId && shouldFile) {

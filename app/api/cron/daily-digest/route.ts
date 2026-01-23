@@ -4,11 +4,19 @@ import { prisma } from '@/lib/db'
 
 export async function GET(request: NextRequest) {
   try {
-    // Verify cron secret if configured
+    // SECURITY: CRON_SECRET is required (not optional)
     const authHeader = request.headers.get('authorization')
     const cronSecret = process.env.CRON_SECRET
     
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    if (!cronSecret) {
+      console.error('CRON_SECRET not configured - cron endpoint is disabled')
+      return NextResponse.json(
+        { error: 'Cron endpoint not configured' },
+        { status: 500 }
+      )
+    }
+    
+    if (authHeader !== `Bearer ${cronSecret}`) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 

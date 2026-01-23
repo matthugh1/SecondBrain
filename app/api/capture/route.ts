@@ -1,36 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { captureMessage } from '@/lib/services/capture'
 import { requireTenant } from '@/lib/auth/utils'
+import { validateRequest } from '@/lib/middleware/validate-request'
+import { captureRateLimit } from '@/lib/middleware/rate-limit'
+import { handleError } from '@/lib/middleware/error-handler'
+import { captureSchema } from '@/lib/validation/schemas'
 
 export async function POST(request: NextRequest) {
-  const tenantCheck = await requireTenant()
-  if (tenantCheck instanceof NextResponse) {
-    return tenantCheck
-  }
-  
-  const { tenantId, userId } = tenantCheck
-
   try {
-    const body = await request.json()
-    const { message } = body
+    const tenantCheck = await requireTenant()
+    if (tenantCheck instanceof NextResponse) {
+      return tenantCheck
+    }
+    
+    const { tenantId, userId } = tenantCheck
 
-    if (!message || typeof message !== 'string' || message.trim().length === 0) {
-      return NextResponse.json(
-        { error: 'Message is required' },
-        { status: 400 }
-      )
+    // Rate limiting: 100 requests per hour per tenant
+    const rateLimitCheck = await captureRateLimit(request, tenantId)
+    if (rateLimitCheck) {
+      return rateLimitCheck
     }
 
-    const result = await captureMessage(tenantId, message.trim(), userId)
+    // Validate request body
+    const validation = await validateRequest(captureSchema, request)
+    if (!validation.success) {
+      return validation.response
+    }
+
+    const { data } = validation
+    const result = await captureMessage(tenantId, data.message, userId)
     return NextResponse.json(result)
   } catch (error) {
-    console.error('Error in capture API:', error)
-    return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error occurred',
-      },
-      { status: 500 }
-    )
+    return handleError(error, '/api/capture')
   }
 }

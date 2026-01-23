@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireTenant } from '@/lib/auth/utils'
 import * as emailsRepo from '@/lib/db/repositories/emails'
 import { fetchEmailsFromGmail } from '@/lib/services/email-capture'
+import { validateRequest } from '@/lib/middleware/validate-request'
+import { handleError } from '@/lib/middleware/error-handler'
+import { emailPostSchema } from '@/lib/validation/schemas'
 
 export async function GET(request: NextRequest) {
   try {
@@ -35,11 +38,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ emails })
   } catch (error) {
-    console.error('Error fetching emails:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return handleError(error, '/api/emails')
   }
 }
 
@@ -51,11 +50,16 @@ export async function POST(request: NextRequest) {
     }
     const { tenantId } = tenantCheck
 
-    const body = await request.json()
-    const { sync } = body
+    // Validate request body
+    const validation = await validateRequest(emailPostSchema, request)
+    if (!validation.success) {
+      return validation.response
+    }
 
-    if (sync === 'gmail') {
-      // Fetch emails from Gmail
+    const { data } = validation
+
+    // Handle Gmail sync
+    if ('sync' in data && data.sync === 'gmail') {
       await fetchEmailsFromGmail(tenantId).catch(err =>
         console.error('Error syncing Gmail:', err)
       )
@@ -65,22 +69,18 @@ export async function POST(request: NextRequest) {
     // Process incoming email (webhook)
     const { processIncomingEmail } = await import('@/lib/services/email-capture')
     const result = await processIncomingEmail(tenantId, {
-      messageId: body.messageId || `webhook-${Date.now()}`,
-      subject: body.subject || '',
-      body: body.body || body.text || '',
-      senderEmail: body.senderEmail || body.from || '',
-      senderName: body.senderName,
-      recipientEmail: body.recipientEmail || body.to || '',
-      receivedAt: body.receivedAt ? new Date(body.receivedAt) : new Date(),
-      attachments: body.attachments,
+      messageId: data.messageId || `webhook-${Date.now()}`,
+      subject: data.subject || '',
+      body: data.body || data.text || '',
+      senderEmail: data.senderEmail || data.from || '',
+      senderName: data.senderName,
+      recipientEmail: data.recipientEmail || data.to || '',
+      receivedAt: data.receivedAt ? new Date(data.receivedAt) : new Date(),
+      attachments: data.attachments,
     })
 
     return NextResponse.json({ success: true, email: result })
-  } catch (error: any) {
-    console.error('Error processing email:', error)
-    return NextResponse.json(
-      { error: error.message || 'Internal server error' },
-      { status: 500 }
-    )
+  } catch (error) {
+    return handleError(error, '/api/emails')
   }
 }

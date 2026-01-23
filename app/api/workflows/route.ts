@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireTenant } from '@/lib/auth/utils'
 import * as workflowsRepo from '@/lib/db/repositories/workflows'
+import { validateRequest } from '@/lib/middleware/validate-request'
+import { handleError } from '@/lib/middleware/error-handler'
+import { createWorkflowSchema } from '@/lib/validation/schemas'
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,11 +20,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ workflows })
   } catch (error) {
-    console.error('Error fetching workflows:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return handleError(error, '/api/workflows')
   }
 }
 
@@ -33,15 +32,14 @@ export async function POST(request: NextRequest) {
     }
     const { tenantId } = tenantCheck
 
-    const body = await request.json()
-    const { name, description, trigger, actions, priority, enabled } = body
-
-    if (!name || !trigger || !actions || !Array.isArray(actions)) {
-      return NextResponse.json(
-        { error: 'name, trigger, and actions array are required' },
-        { status: 400 }
-      )
+    // Validate request body
+    const validation = await validateRequest(createWorkflowSchema, request)
+    if (!validation.success) {
+      return validation.response
     }
+
+    const { data } = validation
+    const { name, description, trigger, actions, priority, enabled } = data
 
     const workflowId = await workflowsRepo.createWorkflow(tenantId, {
       name,
@@ -56,10 +54,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ workflow })
   } catch (error) {
-    console.error('Error creating workflow:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return handleError(error, '/api/workflows')
   }
 }

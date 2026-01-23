@@ -5,6 +5,13 @@ import * as ideasRepo from '@/lib/db/repositories/ideas'
 import * as adminRepo from '@/lib/db/repositories/admin'
 import { getLogIdsForItems } from '@/lib/db/repositories/inbox-log'
 import { requireTenant } from '@/lib/auth/utils'
+import { validateRequest } from '@/lib/middleware/validate-request'
+import {
+  createPersonSchema,
+  createProjectSchema,
+  createIdeaSchema,
+  createAdminSchema,
+} from '@/lib/validation/schemas'
 import type { Person, Project, Idea, Admin } from '@/types'
 
 const validDatabases = ['people', 'projects', 'ideas', 'admin']
@@ -106,14 +113,8 @@ export async function GET(
       return NextResponse.json(data)
     }
   } catch (error) {
-    console.error(`Error fetching ${params.database}:`, error)
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-    const errorStack = error instanceof Error ? error.stack : undefined
-    console.error('Error details:', { errorMessage, errorStack })
-    return NextResponse.json(
-      { error: 'Internal server error', details: errorMessage },
-      { status: 500 }
-    )
+    const { handleError } = await import('@/lib/middleware/error-handler')
+    return handleError(error, `/api/${params.database}`)
   }
 }
 
@@ -138,7 +139,36 @@ export async function POST(
       )
     }
 
-    const body = await request.json()
+    // Validate request body based on database type
+    let validation: { success: true; data: any } | { success: false; response: NextResponse }
+    let schema: any
+
+    switch (database) {
+      case 'people':
+        schema = createPersonSchema
+        break
+      case 'projects':
+        schema = createProjectSchema
+        break
+      case 'ideas':
+        schema = createIdeaSchema
+        break
+      case 'admin':
+        schema = createAdminSchema
+        break
+      default:
+        return NextResponse.json(
+          { error: 'Invalid database' },
+          { status: 400 }
+        )
+    }
+
+    validation = await validateRequest(schema, request)
+    if (!validation.success) {
+      return validation.response
+    }
+
+    const body = validation.data
     let id: number
 
     switch (database) {
@@ -163,10 +193,7 @@ export async function POST(
 
     return NextResponse.json({ id, ...body }, { status: 201 })
   } catch (error) {
-    console.error(`Error creating ${params.database}:`, error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    const { handleError } = await import('@/lib/middleware/error-handler')
+    return handleError(error, `/api/${params.database}`)
   }
 }

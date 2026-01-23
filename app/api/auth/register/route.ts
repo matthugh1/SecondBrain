@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { hashPassword } from '@/lib/auth/password'
+import { validateRequest } from '@/lib/middleware/validate-request'
+import { authRateLimit } from '@/lib/middleware/rate-limit'
+import { registerSchema } from '@/lib/validation/schemas'
 
 export async function POST(request: NextRequest) {
+  // Rate limiting: 5 attempts per minute per IP
+  const rateLimitCheck = await authRateLimit(request)
+  if (rateLimitCheck) {
+    return rateLimitCheck
+  }
+
   try {
     // Check database connection
     if (!process.env.DATABASE_URL) {
@@ -13,15 +22,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const body = await request.json()
-    const { email, password, name } = body
-
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: 'Email and password are required' },
-        { status: 400 }
-      )
+    // Validate request body
+    const validation = await validateRequest(registerSchema, request)
+    if (!validation.success) {
+      return validation.response
     }
+
+    const { data } = validation
+    const { email, password, name } = data
 
     // Test database connection
     try {
@@ -326,6 +334,22 @@ RULES:
         })
       }
 
+      // Create default service account for MCP server
+      // This allows the MCP server to work immediately for new tenants
+      const { generateServiceAccountToken, hashServiceAccountToken } = await import('@/lib/auth/service-account')
+      const serviceAccountToken = generateServiceAccountToken()
+      const tokenHash = hashServiceAccountToken(serviceAccountToken)
+      
+      await tx.serviceAccount.create({
+        data: {
+          tenantId: tenant.id,
+          name: 'MCP Server',
+          description: 'Default service account for MCP server authentication (created automatically)',
+          tokenHash,
+          createdBy: user.id,
+        },
+      })
+
       return { user, tenant }
     })
 
@@ -335,12 +359,8 @@ RULES:
       tenantId: result.tenant.id,
     })
   } catch (error) {
-    console.error('Registration error:', error)
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : 'Registration failed',
-      },
-      { status: 500 }
-    )
+    // Use centralized error handler
+    const { handleError } = await import('@/lib/middleware/error-handler')
+    return handleError(error, '/api/auth/register')
   }
 }

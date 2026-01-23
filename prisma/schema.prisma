@@ -6,9 +6,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("PRISMA_DATABASE_URL")
-  directUrl = env("POSTGRES_URL")
+  provider     = "postgresql"
+  url          = env("PRISMA_DATABASE_URL")
+  directUrl    = env("POSTGRES_URL")
   relationMode = "prisma"
 }
 
@@ -18,26 +18,26 @@ model User {
   name          String?
   email         String    @unique
   emailVerified DateTime?
-  password      String?   // For credentials provider
+  password      String? // For credentials provider
   image         String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts      Account[]
-  sessions      Session[]
-  memberships   Membership[]
-  userAnalytics UserAnalytics[]
-  userProfiles  UserProfile[]
-  reminders     Reminder[]
+  accounts            Account[]
+  sessions            Session[]
+  memberships         Membership[]
+  userAnalytics       UserAnalytics[]
+  userProfiles        UserProfile[]
+  reminders           Reminder[]
   reminderPreferences ReminderPreference[]
-  insights      Insight[]
-  patterns      Pattern[]
-  approvedActions AgentAction[] @relation("ApprovedActions")
-  plans         Plan[]
-  agentActivities AgentActivity[]
-  agentSettings AgentSettings[]
-  messageLogs MessageLog[]
-  predictions Prediction[]
+  insights            Insight[]
+  patterns            Pattern[]
+  approvedActions     AgentAction[]        @relation("ApprovedActions")
+  plans               Plan[]
+  agentActivities     AgentActivity[]
+  agentSettings       AgentSettings[]
+  messageLogs         MessageLog[]
+  predictions         Prediction[]
 }
 
 model Account {
@@ -86,61 +86,62 @@ model Tenant {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  memberships Membership[]
-  invites     Invite[]
-  people       Person[]
-  projects     Project[]
-  ideas        Idea[]
-  adminItems   Admin[]
-  inboxLogs    InboxLog[]
-  digests      Digest[]
-  customDigestTemplates CustomDigestTemplate[]
-  ruleSettings RuleSettings?
-  ruleCategories RuleCategory[]
-  rulePrompts  RulePrompt[]
-  ruleRoutings RuleRouting[]
-  attachments  Attachment[]
-  comments     Comment[]
-  actionHistory ActionHistory[]
-  classificationAudits ClassificationAudit[]
+  memberships               Membership[]
+  invites                   Invite[]
+  people                    Person[]
+  projects                  Project[]
+  ideas                     Idea[]
+  adminItems                Admin[]
+  inboxLogs                 InboxLog[]
+  digests                   Digest[]
+  customDigestTemplates     CustomDigestTemplate[]
+  ruleSettings              RuleSettings?
+  ruleCategories            RuleCategory[]
+  rulePrompts               RulePrompt[]
+  ruleRoutings              RuleRouting[]
+  attachments               Attachment[]
+  comments                  Comment[]
+  actionHistory             ActionHistory[]
+  classificationAudits      ClassificationAudit[]
   classificationCorrections ClassificationCorrection[]
-  tags         Tag[]
-  itemTags     ItemTag[]
-  savedSearches SavedSearch[]
-  tokenUsage   TokenUsage[]
-  calendarEvents CalendarEvent[]
-  embeddings   Embedding[]
-  queryHistory QueryHistory[]
-  relationships Relationship[]
-  userAnalytics UserAnalytics[]
-  userProfiles UserProfile[]
-  reminders Reminder[]
-  reminderPreferences ReminderPreference[]
-  insights Insight[]
-  patterns Pattern[]
-  goals Goal[]
-  goalProjects GoalProject[]
-  goalIdeas GoalIdea[]
-  goalProgresses GoalProgress[]
-  agentActions AgentAction[]
-  actionTemplates ActionTemplate[]
-  workflows Workflow[]
-  workflowExecutions WorkflowExecution[]
-  plans Plan[]
-  planSteps PlanStep[]
-  integrations Integration[]
-  webhookEvents WebhookEvent[]
-  emails Email[]
-  calendarSyncs CalendarSync[]
-  slackMessages SlackMessage[]
-  notionSyncs NotionSync[]
-  agentActivities AgentActivity[]
-  agentSettings AgentSettings[]
-  messageLogs MessageLog[]
-  predictions Prediction[]
-  audioNotes AudioNote[]
-  taskTemplates TaskTemplate[]
-  taskDependencies TaskDependency[]
+  tags                      Tag[]
+  itemTags                  ItemTag[]
+  savedSearches             SavedSearch[]
+  tokenUsage                TokenUsage[]
+  calendarEvents            CalendarEvent[]
+  embeddings                Embedding[]
+  queryHistory              QueryHistory[]
+  relationships             Relationship[]
+  userAnalytics             UserAnalytics[]
+  userProfiles              UserProfile[]
+  reminders                 Reminder[]
+  reminderPreferences       ReminderPreference[]
+  insights                  Insight[]
+  patterns                  Pattern[]
+  goals                     Goal[]
+  goalProjects              GoalProject[]
+  goalIdeas                 GoalIdea[]
+  goalProgresses            GoalProgress[]
+  agentActions              AgentAction[]
+  actionTemplates           ActionTemplate[]
+  workflows                 Workflow[]
+  workflowExecutions        WorkflowExecution[]
+  plans                     Plan[]
+  planSteps                 PlanStep[]
+  integrations              Integration[]
+  webhookEvents             WebhookEvent[]
+  emails                    Email[]
+  calendarSyncs             CalendarSync[]
+  slackMessages             SlackMessage[]
+  notionSyncs               NotionSync[]
+  agentActivities           AgentActivity[]
+  agentSettings             AgentSettings[]
+  messageLogs               MessageLog[]
+  predictions               Prediction[]
+  audioNotes                AudioNote[]
+  taskTemplates             TaskTemplate[]
+  taskDependencies          TaskDependency[]
+  serviceAccounts           ServiceAccount[]
 }
 
 model Membership {
@@ -177,17 +178,17 @@ model Invite {
 
 // Domain models
 model Person {
-  id          Int      @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   tenantId    String
   name        String
   context     String?
-  followUps   String?  @map("follow_ups")
-  lastTouched String?  @map("last_touched")
+  followUps   String?   @map("follow_ups")
+  lastTouched String?   @map("last_touched")
   tags        String?
-  archived    Int      @default(0)
+  archived    Int       @default(0)
   archivedAt  DateTime? @map("archived_at")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
@@ -198,42 +199,42 @@ model Person {
 }
 
 model Project {
-  id          Int      @id @default(autoincrement())
-  tenantId    String
-  name        String
-  status      String   @default("Active")
-  nextAction  String?  @map("next_action")
-  notes       String?
-  archived    Int      @default(0)
-  archivedAt  DateTime? @map("archived_at")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id         Int       @id @default(autoincrement())
+  tenantId   String
+  name       String
+  status     String    @default("Active")
+  nextAction String?   @map("next_action")
+  notes      String?
+  archived   Int       @default(0)
+  archivedAt DateTime? @map("archived_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
 
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   tasks  Admin[]
+
+  goalProjects GoalProject[]
 
   @@index([tenantId])
   @@index([status])
   @@index([archived])
-  
-  goalProjects GoalProject[]
   @@map("projects")
 }
 
 model Idea {
-  id          Int      @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   tenantId    String
   name        String
-  oneLiner    String?  @map("one_liner")
+  oneLiner    String?   @map("one_liner")
   notes       String?
-  lastTouched String?  @map("last_touched")
+  lastTouched String?   @map("last_touched")
   tags        String?
-  archived    Int      @default(0)
+  archived    Int       @default(0)
   archivedAt  DateTime? @map("archived_at")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
 
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   goalIdeas GoalIdea[]
 
   @@index([tenantId])
@@ -242,32 +243,32 @@ model Idea {
 }
 
 model Admin {
-  id                Int      @id @default(autoincrement())
+  id                Int       @id @default(autoincrement())
   tenantId          String
   name              String
-  dueDate           String?  @map("due_date")
+  dueDate           String?   @map("due_date")
   startDate         DateTime? @map("start_date")
-  status            String   @default("Todo")
-  priority          String?  @default("medium") // low, medium, high, urgent
-  notes             String?  @db.Text
+  status            String    @default("Todo")
+  priority          String?   @default("medium") // low, medium, high, urgent
+  notes             String?   @db.Text
   completedAt       DateTime? @map("completed_at")
-  estimatedDuration Int?     @map("estimated_duration") // minutes
-  actualDuration    Int?     @map("actual_duration") // minutes
-  recurrenceRule    String?  @map("recurrence_rule") @db.Text // JSON for recurring tasks
-  parentTaskId      Int?     @map("parent_task_id") // for sub-tasks
-  projectId         Int?     @map("project_id") // explicit link to projects
-  assigneeId        String?  @map("assignee_id") // userId for future multi-user
-  archived          Int      @default(0)
-  archivedAt       DateTime? @map("archived_at")
-  created           DateTime @default(now())
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  estimatedDuration Int?      @map("estimated_duration") // minutes
+  actualDuration    Int?      @map("actual_duration") // minutes
+  recurrenceRule    String?   @map("recurrence_rule") @db.Text // JSON for recurring tasks
+  parentTaskId      Int?      @map("parent_task_id") // for sub-tasks
+  projectId         Int?      @map("project_id") // explicit link to projects
+  assigneeId        String?   @map("assignee_id") // userId for future multi-user
+  archived          Int       @default(0)
+  archivedAt        DateTime? @map("archived_at")
+  created           DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt @map("updated_at")
 
-  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  parentTask        Admin?   @relation("TaskSubtasks", fields: [parentTaskId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  subTasks          Admin[]  @relation("TaskSubtasks")
-  project           Project? @relation(fields: [projectId], references: [id])
-  blockingDeps      TaskDependency[] @relation("BlockingTasks")
-  blockedByDeps     TaskDependency[] @relation("BlockedTasks")
+  tenant        Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  parentTask    Admin?           @relation("TaskSubtasks", fields: [parentTaskId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  subTasks      Admin[]          @relation("TaskSubtasks")
+  project       Project?         @relation(fields: [projectId], references: [id])
+  blockingDeps  TaskDependency[] @relation("BlockingTasks")
+  blockedByDeps TaskDependency[] @relation("BlockedTasks")
 
   @@index([tenantId])
   @@index([archived])
@@ -303,11 +304,11 @@ model InboxLog {
 }
 
 model Digest {
-  id        Int      @id @default(autoincrement())
-  tenantId  String
-  type      String
-  content   String   @db.Text
-  created   DateTime @default(now())
+  id       Int      @id @default(autoincrement())
+  tenantId String
+  type     String
+  content  String   @db.Text
+  created  DateTime @default(now())
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
@@ -318,12 +319,12 @@ model Digest {
 }
 
 model CustomDigestTemplate {
-  id        Int      @id @default(autoincrement())
-  tenantId  String
-  name      String
-  prompt    String   @db.Text
-  created   DateTime @default(now())
-  updated   DateTime @updatedAt
+  id       Int      @id @default(autoincrement())
+  tenantId String
+  name     String
+  prompt   String   @db.Text
+  created  DateTime @default(now())
+  updated  DateTime @updatedAt
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
@@ -332,15 +333,15 @@ model CustomDigestTemplate {
 }
 
 model RuleSettings {
-  id                    Int      @id @default(autoincrement())
-  tenantId              String   @unique
-  confidenceThreshold   Float    @default(0.7) @map("confidence_threshold")
-  defaultProjectStatus  String   @default("Active") @map("default_project_status")
-  defaultAdminStatus     String   @default("Todo") @map("default_admin_status")
-  learningEnabled       Int      @default(1) @map("learning_enabled")
-  maxLearningExamples   Int      @default(5) @map("max_learning_examples")
-  exampleTimeframeDays  Int      @default(30) @map("example_timeframe_days")
-  updatedAt             DateTime @updatedAt @map("updated_at")
+  id                   Int      @id @default(autoincrement())
+  tenantId             String   @unique
+  confidenceThreshold  Float    @default(0.7) @map("confidence_threshold")
+  defaultProjectStatus String   @default("Active") @map("default_project_status")
+  defaultAdminStatus   String   @default("Todo") @map("default_admin_status")
+  learningEnabled      Int      @default(1) @map("learning_enabled")
+  maxLearningExamples  Int      @default(5) @map("max_learning_examples")
+  exampleTimeframeDays Int      @default(30) @map("example_timeframe_days")
+  updatedAt            DateTime @updatedAt @map("updated_at")
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
@@ -348,16 +349,16 @@ model RuleSettings {
 }
 
 model RuleCategory {
-  id          Int      @id @default(autoincrement())
-  tenantId    String
-  categoryKey String   @map("category_key")
-  label       String
-  description String?
-  enabled     Int      @default(1)
-  fieldSchema String?  @map("field_schema") @db.Text
-  displayOrder Int     @default(0) @map("display_order")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id           Int      @id @default(autoincrement())
+  tenantId     String
+  categoryKey  String   @map("category_key")
+  label        String
+  description  String?
+  enabled      Int      @default(1)
+  fieldSchema  String?  @map("field_schema") @db.Text
+  displayOrder Int      @default(0) @map("display_order")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
@@ -386,13 +387,13 @@ model RulePrompt {
 }
 
 model RuleRouting {
-  id              Int      @id @default(autoincrement())
-  tenantId        String
-  categoryKey     String   @map("category_key")
-  destinationTable String  @map("destination_table")
-  fieldMapping    String?  @map("field_mapping") @db.Text
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id               Int      @id @default(autoincrement())
+  tenantId         String
+  categoryKey      String   @map("category_key")
+  destinationTable String   @map("destination_table")
+  fieldMapping     String?  @map("field_mapping") @db.Text
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
@@ -438,15 +439,15 @@ model Comment {
 }
 
 model ActionHistory {
-  id        Int      @id @default(autoincrement())
-  tenantId  String
-  actionType String  @map("action_type")
-  itemType  String   @map("item_type")
-  itemId    Int?     @map("item_id")
-  oldData   String?  @map("old_data") @db.Text
-  newData   String?  @map("new_data") @db.Text
-  timestamp DateTime @default(now())
-  undone    Int      @default(0)
+  id         Int      @id @default(autoincrement())
+  tenantId   String
+  actionType String   @map("action_type")
+  itemType   String   @map("item_type")
+  itemId     Int?     @map("item_id")
+  oldData    String?  @map("old_data") @db.Text
+  newData    String?  @map("new_data") @db.Text
+  timestamp  DateTime @default(now())
+  undone     Int      @default(0)
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
@@ -485,9 +486,9 @@ model ClassificationCorrection {
   correctedCategory String   @map("corrected_category")
   messageText       String   @map("message_text") @db.Text
   createdAt         DateTime @default(now()) @map("created_at")
-  
+
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
+
   @@index([tenantId])
   @@index([tenantId, correctedCategory])
   @@index([createdAt])
@@ -500,7 +501,7 @@ model Tag {
   name      String
   createdAt DateTime @default(now()) @map("created_at")
 
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   itemTags ItemTag[]
 
   @@unique([tenantId, name])
@@ -510,10 +511,10 @@ model Tag {
 }
 
 model ItemTag {
-  tenantId  String
-  itemType  String   @map("item_type")
-  itemId    Int      @map("item_id")
-  tagId     Int      @map("tag_id")
+  tenantId String
+  itemType String @map("item_type")
+  itemId   Int    @map("item_id")
+  tagId    Int    @map("tag_id")
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
@@ -542,15 +543,15 @@ model SavedSearch {
 }
 
 model TokenUsage {
-  id              Int      @id @default(autoincrement())
-  tenantId        String
-  provider        String   // 'openai' | 'anthropic'
-  model           String
-  operationType   String   @map("operation_type") // 'classification' | 'digest'
-  promptTokens    Int      @map("prompt_tokens")
-  completionTokens Int     @map("completion_tokens")
-  totalTokens     Int      @map("total_tokens")
-  created         DateTime @default(now())
+  id               Int      @id @default(autoincrement())
+  tenantId         String
+  provider         String // 'openai' | 'anthropic'
+  model            String
+  operationType    String   @map("operation_type") // 'classification' | 'digest'
+  promptTokens     Int      @map("prompt_tokens")
+  completionTokens Int      @map("completion_tokens")
+  totalTokens      Int      @map("total_tokens")
+  created          DateTime @default(now())
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
@@ -615,18 +616,18 @@ model QueryHistory {
 }
 
 model Relationship {
-  id              Int      @id @default(autoincrement())
-  tenantId        String
-  sourceType      String   @map("source_type")
-  sourceId        Int      @map("source_id")
-  targetType      String   @map("target_type")
-  targetId        Int      @map("target_id")
-  relationshipType String  @default("mentioned_in") @map("relationship_type")
-  strength        Float    @default(0.5)
-  mentionCount    Int      @default(1) @map("mention_count")
-  lastMentioned   DateTime @default(now()) @map("last_mentioned")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id               Int      @id @default(autoincrement())
+  tenantId         String
+  sourceType       String   @map("source_type")
+  sourceId         Int      @map("source_id")
+  targetType       String   @map("target_type")
+  targetId         Int      @map("target_id")
+  relationshipType String   @default("mentioned_in") @map("relationship_type")
+  strength         Float    @default(0.5)
+  mentionCount     Int      @default(1) @map("mention_count")
+  lastMentioned    DateTime @default(now()) @map("last_mentioned")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
@@ -639,17 +640,17 @@ model Relationship {
 }
 
 model UserAnalytics {
-  id                  Int      @id @default(autoincrement())
-  tenantId            String
-  userId              String
-  captureCount        Int      @default(0) @map("capture_count")
-  avgConfidence       Float?   @map("avg_confidence")
-  mostCommonCategory  String?  @map("most_common_category")
-  preferredCaptureTime String? @map("preferred_capture_time") // hour of day
-  preferredCaptureDay  String? @map("preferred_capture_day")  // day of week
-  correctionCount     Int      @default(0) @map("correction_count")
-  createdAt           DateTime @default(now()) @map("created_at")
-  updatedAt           DateTime @updatedAt @map("updated_at")
+  id                   Int      @id @default(autoincrement())
+  tenantId             String
+  userId               String
+  captureCount         Int      @default(0) @map("capture_count")
+  avgConfidence        Float?   @map("avg_confidence")
+  mostCommonCategory   String?  @map("most_common_category")
+  preferredCaptureTime String?  @map("preferred_capture_time") // hour of day
+  preferredCaptureDay  String?  @map("preferred_capture_day") // day of week
+  correctionCount      Int      @default(0) @map("correction_count")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -660,14 +661,14 @@ model UserAnalytics {
 }
 
 model UserProfile {
-  id              Int      @id @default(autoincrement())
-  tenantId        String
-  userId          String
-  preferences     String   @db.Text // JSON preferences
-  frequentPeople  String?  @db.Text @map("frequent_people") // JSON array
-  activeFocusAreas String? @db.Text @map("active_focus_areas") // JSON array
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id               Int      @id @default(autoincrement())
+  tenantId         String
+  userId           String
+  preferences      String   @db.Text // JSON preferences
+  frequentPeople   String?  @map("frequent_people") @db.Text // JSON array
+  activeFocusAreas String?  @map("active_focus_areas") @db.Text // JSON array
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -678,20 +679,20 @@ model UserProfile {
 }
 
 model Reminder {
-  id              Int      @id @default(autoincrement())
-  tenantId        String
-  userId          String
-  reminderType    String   @map("reminder_type") // due_date, follow_up, stale_item, etc.
-  itemType        String   @map("item_type") // people, projects, ideas, admin
-  itemId          Int      @map("item_id")
-  title           String
-  message         String   @db.Text
-  dueDate         DateTime? @map("due_date")
-  priority        String   @default("medium") // low, medium, high
-  status          String   @default("active") // active, snoozed, dismissed, completed
-  snoozedUntil    DateTime? @map("snoozed_until")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id           Int       @id @default(autoincrement())
+  tenantId     String
+  userId       String
+  reminderType String    @map("reminder_type") // due_date, follow_up, stale_item, etc.
+  itemType     String    @map("item_type") // people, projects, ideas, admin
+  itemId       Int       @map("item_id")
+  title        String
+  message      String    @db.Text
+  dueDate      DateTime? @map("due_date")
+  priority     String    @default("medium") // low, medium, high
+  status       String    @default("active") // active, snoozed, dismissed, completed
+  snoozedUntil DateTime? @map("snoozed_until")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -725,19 +726,19 @@ model ReminderPreference {
 }
 
 model Insight {
-  id              Int      @id @default(autoincrement())
-  tenantId        String
-  userId          String
-  insightType     String   @map("insight_type") // pattern, stagnation, opportunity, trend
-  title           String
-  message         String   @db.Text
-  data            String?  @db.Text // JSON data for insights
-  actionable      Boolean  @default(true)
-  actionType      String?  @map("action_type") // convert_to_project, archive, update, etc.
-  actionTargetId  Int?     @map("action_target_id")
-  priority        String   @default("medium")
-  status          String   @default("active") // active, dismissed, acted_upon
-  createdAt       DateTime @default(now()) @map("created_at")
+  id             Int      @id @default(autoincrement())
+  tenantId       String
+  userId         String
+  insightType    String   @map("insight_type") // pattern, stagnation, opportunity, trend
+  title          String
+  message        String   @db.Text
+  data           String?  @db.Text // JSON data for insights
+  actionable     Boolean  @default(true)
+  actionType     String?  @map("action_type") // convert_to_project, archive, update, etc.
+  actionTargetId Int?     @map("action_target_id")
+  priority       String   @default("medium")
+  status         String   @default("active") // active, dismissed, acted_upon
+  createdAt      DateTime @default(now()) @map("created_at")
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -749,13 +750,13 @@ model Insight {
 }
 
 model Pattern {
-  id              Int      @id @default(autoincrement())
-  tenantId        String
-  userId          String
-  patternType     String   @map("pattern_type") // capture_frequency, category_distribution, etc.
-  patternData     String   @db.Text @map("pattern_data") // JSON pattern data
-  detectedAt      DateTime @default(now()) @map("detected_at")
-  confidence      Float    @default(0.5)
+  id          Int      @id @default(autoincrement())
+  tenantId    String
+  userId      String
+  patternType String   @map("pattern_type") // capture_frequency, category_distribution, etc.
+  patternData String   @map("pattern_data") @db.Text // JSON pattern data
+  detectedAt  DateTime @default(now()) @map("detected_at")
+  confidence  Float    @default(0.5)
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -766,40 +767,40 @@ model Pattern {
 }
 
 model Goal {
-  id              Int      @id @default(autoincrement())
-  tenantId        String
-  name            String
-  description     String?  @db.Text
-  targetDate      DateTime? @map("target_date")
-  status          String   @default("active") // active, completed, paused, cancelled
-  progress        Float    @default(0) // 0-100
-  progressMethod  String   @default("manual") @map("progress_method") // manual, auto_from_items
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id             Int       @id @default(autoincrement())
+  tenantId       String
+  name           String
+  description    String?   @db.Text
+  targetDate     DateTime? @map("target_date")
+  status         String    @default("active") // active, completed, paused, cancelled
+  progress       Float     @default(0) // 0-100
+  progressMethod String    @default("manual") @map("progress_method") // manual, auto_from_items
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
 
-  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   linkedProjects  GoalProject[]
   linkedIdeas     GoalIdea[]
   progressHistory GoalProgress[]
-  
+
   @@index([tenantId, status])
   @@index([tenantId, targetDate])
   @@map("goals")
 }
 
 model GoalProject {
-  id              Int      @id @default(autoincrement())
-  tenantId        String
-  goalId          Int      @map("goal_id")
-  projectId       Int      @map("project_id")
-  weight          Float    @default(1.0) // Contribution weight
-  createdAt       DateTime @default(now()) @map("created_at")
-  
-  goal            Goal     @relation(fields: [goalId], references: [id], onDelete: Cascade)
-  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
+  id        Int      @id @default(autoincrement())
+  tenantId  String
+  goalId    Int      @map("goal_id")
+  projectId Int      @map("project_id")
+  weight    Float    @default(1.0) // Contribution weight
+  createdAt DateTime @default(now()) @map("created_at")
+
+  goal    Goal    @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   @@unique([tenantId, goalId, projectId])
   @@index([tenantId, goalId])
   @@index([tenantId, projectId])
@@ -807,17 +808,17 @@ model GoalProject {
 }
 
 model GoalIdea {
-  id              Int      @id @default(autoincrement())
-  tenantId        String
-  goalId          Int      @map("goal_id")
-  ideaId          Int      @map("idea_id")
-  weight          Float    @default(1.0)
-  createdAt       DateTime @default(now()) @map("created_at")
-  
-  goal            Goal     @relation(fields: [goalId], references: [id], onDelete: Cascade)
-  idea            Idea     @relation(fields: [ideaId], references: [id], onDelete: Cascade)
-  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
+  id        Int      @id @default(autoincrement())
+  tenantId  String
+  goalId    Int      @map("goal_id")
+  ideaId    Int      @map("idea_id")
+  weight    Float    @default(1.0)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  goal   Goal   @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  idea   Idea   @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   @@unique([tenantId, goalId, ideaId])
   @@index([tenantId, goalId])
   @@index([tenantId, ideaId])
@@ -825,41 +826,41 @@ model GoalIdea {
 }
 
 model GoalProgress {
-  id              Int      @id @default(autoincrement())
-  tenantId        String
-  goalId          Int      @map("goal_id")
-  progress        Float
-  recordedAt      DateTime @default(now()) @map("recorded_at")
-  
-  goal            Goal     @relation(fields: [goalId], references: [id], onDelete: Cascade)
-  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
+  id         Int      @id @default(autoincrement())
+  tenantId   String
+  goalId     Int      @map("goal_id")
+  progress   Float
+  recordedAt DateTime @default(now()) @map("recorded_at")
+
+  goal   Goal   @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   @@index([tenantId, goalId, recordedAt])
   @@map("goal_progress")
 }
 
 model AgentAction {
-  id              Int      @id @default(autoincrement())
-  tenantId        String
-  userId          String?
-  actionType      String   @map("action_type") // create, update, delete, link, notify, schedule
-  targetType      String?  @map("target_type") // people, projects, ideas, admin
-  targetId        Int?     @map("target_id")
-  parameters      String   @db.Text // JSON parameters
-  status          String   @default("pending") @map("status") // pending, approved, executing, executed, rejected, failed
-  requiresApproval Boolean @default(true) @map("requires_approval")
-  approvedBy      String?  @map("approved_by")
-  approvedAt      DateTime? @map("approved_at")
-  executedAt      DateTime? @map("executed_at")
-  result          String?  @db.Text // JSON result
-  errorMessage    String?  @db.Text @map("error_message")
-  rollbackData    String?  @db.Text @map("rollback_data") // JSON state before action
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id               Int       @id @default(autoincrement())
+  tenantId         String
+  userId           String?
+  actionType       String    @map("action_type") // create, update, delete, link, notify, schedule
+  targetType       String?   @map("target_type") // people, projects, ideas, admin
+  targetId         Int?      @map("target_id")
+  parameters       String    @db.Text // JSON parameters
+  status           String    @default("pending") @map("status") // pending, approved, executing, executed, rejected, failed
+  requiresApproval Boolean   @default(true) @map("requires_approval")
+  approvedBy       String?   @map("approved_by")
+  approvedAt       DateTime? @map("approved_at")
+  executedAt       DateTime? @map("executed_at")
+  result           String?   @db.Text // JSON result
+  errorMessage     String?   @map("error_message") @db.Text
+  rollbackData     String?   @map("rollback_data") @db.Text // JSON state before action
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
 
-  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  approver        User?    @relation("ApprovedActions", fields: [approvedBy], references: [id])
-  
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  approver User?  @relation("ApprovedActions", fields: [approvedBy], references: [id])
+
   @@index([tenantId, status])
   @@index([tenantId, userId])
   @@index([tenantId, actionType])
@@ -868,39 +869,39 @@ model AgentAction {
 }
 
 model ActionTemplate {
-  id              Int      @id @default(autoincrement())
-  tenantId        String
-  name            String
-  description     String? @db.Text
-  actions         String   @db.Text // JSON array of actions
-  parameters      String?  @db.Text // JSON parameter schema
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id          Int      @id @default(autoincrement())
+  tenantId    String
+  name        String
+  description String?  @db.Text
+  actions     String   @db.Text // JSON array of actions
+  parameters  String?  @db.Text // JSON parameter schema
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
-  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   @@index([tenantId])
   @@map("action_templates")
 }
 
 model Workflow {
-  id              Int      @id @default(autoincrement())
-  tenantId        String
-  name            String
-  description     String?  @db.Text
-  trigger         String   @db.Text // JSON trigger condition
-  actions         String   @db.Text // JSON action sequence
-  priority        Int      @default(0) @map("priority") // Higher = executes first
-  enabled         Boolean  @default(true)
-  executionCount  Int      @default(0) @map("execution_count")
-  lastExecutedAt  DateTime? @map("last_executed_at")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id             Int       @id @default(autoincrement())
+  tenantId       String
+  name           String
+  description    String?   @db.Text
+  trigger        String    @db.Text // JSON trigger condition
+  actions        String    @db.Text // JSON action sequence
+  priority       Int       @default(0) @map("priority") // Higher = executes first
+  enabled        Boolean   @default(true)
+  executionCount Int       @default(0) @map("execution_count")
+  lastExecutedAt DateTime? @map("last_executed_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
 
-  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
-  executions      WorkflowExecution[]
-  
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  executions WorkflowExecution[]
+
   @@index([tenantId, enabled])
   @@index([tenantId, priority])
   @@map("workflows")
@@ -910,105 +911,107 @@ model WorkflowExecution {
   id              Int      @id @default(autoincrement())
   tenantId        String
   workflowId      Int      @map("workflow_id")
-  status          String   // success, failed, skipped
-  triggerData     String?  @db.Text @map("trigger_data") // JSON data that triggered
-  executedActions String?  @db.Text @map("executed_actions") // JSON actions executed
-  errorMessage    String?  @db.Text @map("error_message")
+  status          String // success, failed, skipped
+  triggerData     String?  @map("trigger_data") @db.Text // JSON data that triggered
+  executedActions String?  @map("executed_actions") @db.Text // JSON actions executed
+  errorMessage    String?  @map("error_message") @db.Text
   executedAt      DateTime @default(now()) @map("executed_at")
-  
-  workflow        Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
-  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
+  idempotencyKey  String?  @unique @map("idempotency_key") // For preventing duplicate executions
+
+  workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   @@index([tenantId, workflowId])
   @@index([tenantId, executedAt])
+  @@index([idempotencyKey])
   @@map("workflow_executions")
 }
 
 model Plan {
-  id              Int      @id @default(autoincrement())
-  tenantId        String
-  userId          String
-  name            String
-  description     String?  @db.Text
-  request         String   @db.Text // Original user request
-  steps           String   @db.Text // JSON array of steps
-  status          String   @default("draft") @map("status") // draft, approved, executing, completed, failed, cancelled
-  approvedAt      DateTime? @map("approved_at")
-  startedAt       DateTime? @map("started_at")
-  completedAt     DateTime? @map("completed_at")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id          Int       @id @default(autoincrement())
+  tenantId    String
+  userId      String
+  name        String
+  description String?   @db.Text
+  request     String    @db.Text // Original user request
+  steps       String    @db.Text // JSON array of steps
+  status      String    @default("draft") @map("status") // draft, approved, executing, completed, failed, cancelled
+  approvedAt  DateTime? @map("approved_at")
+  startedAt   DateTime? @map("started_at")
+  completedAt DateTime? @map("completed_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
 
-  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  planSteps       PlanStep[]
-  
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  planSteps PlanStep[]
+
   @@index([tenantId, userId, status])
   @@index([tenantId, createdAt])
   @@map("plans")
 }
 
 model PlanStep {
-  id              Int      @id @default(autoincrement())
-  tenantId        String
-  planId          Int      @map("plan_id")
-  stepOrder       Int      @map("step_order")
-  actionType      String   @map("action_type")
-  actionParams    String   @db.Text @map("action_params") // JSON parameters
-  dependencies    String?  @db.Text // JSON array of step IDs
-  status          String   @default("pending") @map("status") // pending, executing, completed, failed, skipped
-  result          String?  @db.Text // JSON result
-  errorMessage    String?  @db.Text @map("error_message")
-  executedAt      DateTime? @map("executed_at")
-  
-  plan            Plan     @relation(fields: [planId], references: [id], onDelete: Cascade)
-  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
+  id           Int       @id @default(autoincrement())
+  tenantId     String
+  planId       Int       @map("plan_id")
+  stepOrder    Int       @map("step_order")
+  actionType   String    @map("action_type")
+  actionParams String    @map("action_params") @db.Text // JSON parameters
+  dependencies String?   @db.Text // JSON array of step IDs
+  status       String    @default("pending") @map("status") // pending, executing, completed, failed, skipped
+  result       String?   @db.Text // JSON result
+  errorMessage String?   @map("error_message") @db.Text
+  executedAt   DateTime? @map("executed_at")
+
+  plan   Plan   @relation(fields: [planId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   @@index([tenantId, planId])
   @@index([tenantId, planId, stepOrder])
   @@map("plan_steps")
 }
 
 model Integration {
-  id              Int      @id @default(autoincrement())
-  tenantId        String
-  provider        String   // gmail, slack, notion, google_calendar, etc.
-  config          String   @db.Text // JSON config (encrypted tokens, settings)
-  status          String   @default("disconnected") @map("status") // active, error, disconnected
-  lastSync        DateTime? @map("last_sync")
-  lastError       String?  @db.Text @map("last_error")
-  errorCount      Int      @default(0) @map("error_count")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id         Int       @id @default(autoincrement())
+  tenantId   String
+  provider   String // gmail, slack, notion, google_calendar, etc.
+  config     String    @db.Text // JSON config (encrypted tokens, settings)
+  status     String    @default("disconnected") @map("status") // active, error, disconnected
+  lastSync   DateTime? @map("last_sync")
+  lastError  String?   @map("last_error") @db.Text
+  errorCount Int       @default(0) @map("error_count")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
 
-  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
-  webhookEvents   WebhookEvent[]
-  emails Email[]
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  webhookEvents WebhookEvent[]
+  emails        Email[]
   calendarSyncs CalendarSync[]
   slackMessages SlackMessage[]
-  notionSyncs NotionSync[]
-  
+  notionSyncs   NotionSync[]
+
   @@unique([tenantId, provider])
   @@index([tenantId, status])
   @@map("integrations")
 }
 
 model WebhookEvent {
-  id              Int      @id @default(autoincrement())
-  tenantId        String
-  integrationId   Int      @map("integration_id")
-  eventType       String   @map("event_type")
-  payload         String   @db.Text // JSON payload
-  status          String   @default("pending") @map("status") // pending, processed, failed
-  processedAt     DateTime? @map("processed_at")
-  errorMessage    String?  @db.Text @map("error_message")
-  createdAt       DateTime @default(now()) @map("created_at")
+  id            Int       @id @default(autoincrement())
+  tenantId      String
+  integrationId Int       @map("integration_id")
+  eventType     String    @map("event_type")
+  payload       String    @db.Text // JSON payload
+  status        String    @default("pending") @map("status") // pending, processed, failed
+  processedAt   DateTime? @map("processed_at")
+  errorMessage  String?   @map("error_message") @db.Text
+  createdAt     DateTime  @default(now()) @map("created_at")
 
-  integration     Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
-  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
+  integration Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   @@index([tenantId, integrationId])
   @@index([tenantId, status])
   @@index([tenantId, createdAt])
@@ -1033,9 +1036,9 @@ model Email {
   attachments     String?  @db.Text // JSON array
   createdAt       DateTime @default(now()) @map("created_at")
 
-  integration     Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
-  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
+  integration Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   @@unique([tenantId, integrationId, messageId])
   @@index([tenantId, senderEmail])
   @@index([tenantId, receivedAt])
@@ -1055,32 +1058,32 @@ model CalendarSync {
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
-  integration     Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
-  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
+  integration Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   @@unique([tenantId, integrationId, itemType, itemId])
   @@index([tenantId, calendarEventId])
   @@map("calendar_sync")
 }
 
 model SlackMessage {
-  id              Int      @id @default(autoincrement())
-  tenantId        String
-  integrationId   Int      @map("integration_id")
-  messageId       String   @map("message_id") // Slack message ID
-  channelId       String   @map("channel_id")
-  channelName     String?  @map("channel_name")
-  userId          String   @map("user_id") // Slack user ID
-  userName        String?  @map("user_name")
-  text            String   @db.Text
-  threadTs        String?  @map("thread_ts") // Thread timestamp
-  capturedAs      String?  @map("captured_as") // people, projects, ideas, admin
-  linkedItemId    Int?     @map("linked_item_id")
-  createdAt       DateTime @default(now()) @map("created_at")
+  id            Int      @id @default(autoincrement())
+  tenantId      String
+  integrationId Int      @map("integration_id")
+  messageId     String   @map("message_id") // Slack message ID
+  channelId     String   @map("channel_id")
+  channelName   String?  @map("channel_name")
+  userId        String   @map("user_id") // Slack user ID
+  userName      String?  @map("user_name")
+  text          String   @db.Text
+  threadTs      String?  @map("thread_ts") // Thread timestamp
+  capturedAs    String?  @map("captured_as") // people, projects, ideas, admin
+  linkedItemId  Int?     @map("linked_item_id")
+  createdAt     DateTime @default(now()) @map("created_at")
 
-  integration     Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
-  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
+  integration Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   @@unique([tenantId, integrationId, messageId])
   @@index([tenantId, userId])
   @@index([tenantId, createdAt])
@@ -1088,43 +1091,43 @@ model SlackMessage {
 }
 
 model NotionSync {
-  id              Int      @id @default(autoincrement())
-  tenantId        String
-  integrationId   Int      @map("integration_id")
-  itemType        String   @map("item_type")
-  itemId          Int      @map("item_id")
-  notionPageId    String   @map("notion_page_id")
-  notionDatabaseId String? @map("notion_database_id")
-  syncDirection   String   @map("sync_direction") // to_notion, from_notion, bidirectional
-  lastSyncedAt    DateTime @default(now()) @map("last_synced_at")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id               Int      @id @default(autoincrement())
+  tenantId         String
+  integrationId    Int      @map("integration_id")
+  itemType         String   @map("item_type")
+  itemId           Int      @map("item_id")
+  notionPageId     String   @map("notion_page_id")
+  notionDatabaseId String?  @map("notion_database_id")
+  syncDirection    String   @map("sync_direction") // to_notion, from_notion, bidirectional
+  lastSyncedAt     DateTime @default(now()) @map("last_synced_at")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
-  integration     Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
-  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
+  integration Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   @@unique([tenantId, integrationId, itemType, itemId])
   @@index([tenantId, notionPageId])
   @@map("notion_sync")
 }
 
 model AgentActivity {
-  id              Int      @id @default(autoincrement())
-  tenantId        String
-  userId          String
-  activityType    String   @map("activity_type") // monitor, suggest, execute, learn
-  actionType      String?  @map("action_type") // create, update, delete, etc.
-  targetType      String?  @map("target_type")
-  targetId        Int?     @map("target_id")
-  description     String   @db.Text
-  status          String   // pending, approved, executed, rejected
-  userFeedback    String?  @map("user_feedback") // positive, negative, neutral
-  confidence      Float?
-  createdAt       DateTime @default(now()) @map("created_at")
+  id           Int      @id @default(autoincrement())
+  tenantId     String
+  userId       String
+  activityType String   @map("activity_type") // monitor, suggest, execute, learn
+  actionType   String?  @map("action_type") // create, update, delete, etc.
+  targetType   String?  @map("target_type")
+  targetId     Int?     @map("target_id")
+  description  String   @db.Text
+  status       String // pending, approved, executed, rejected
+  userFeedback String?  @map("user_feedback") // positive, negative, neutral
+  confidence   Float?
+  createdAt    DateTime @default(now()) @map("created_at")
 
-  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([tenantId, userId])
   @@index([tenantId, activityType])
   @@index([tenantId, createdAt])
@@ -1132,37 +1135,37 @@ model AgentActivity {
 }
 
 model AgentSettings {
-  id              Int      @id @default(autoincrement())
-  tenantId        String
-  userId          String
-  proactivityLevel String  @default("medium") @map("proactivity_level") // low, medium, high
-  approvalThreshold Float  @default(0.8) @map("approval_threshold") // 0-1 confidence threshold
-  autoApproveTypes String? @db.Text @map("auto_approve_types") // JSON array of action types
-  focusAreas      String?  @db.Text @map("focus_areas") // JSON array of areas to monitor
-  notificationPreferences String? @db.Text @map("notification_preferences") // JSON preferences
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id                      Int      @id @default(autoincrement())
+  tenantId                String
+  userId                  String
+  proactivityLevel        String   @default("medium") @map("proactivity_level") // low, medium, high
+  approvalThreshold       Float    @default(0.8) @map("approval_threshold") // 0-1 confidence threshold
+  autoApproveTypes        String?  @map("auto_approve_types") @db.Text // JSON array of action types
+  focusAreas              String?  @map("focus_areas") @db.Text // JSON array of areas to monitor
+  notificationPreferences String?  @map("notification_preferences") @db.Text // JSON preferences
+  createdAt               DateTime @default(now()) @map("created_at")
+  updatedAt               DateTime @updatedAt @map("updated_at")
 
-  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([tenantId, userId])
   @@map("agent_settings")
 }
 
 model MessageLog {
-  id              Int      @id @default(autoincrement())
-  tenantId        String
-  userId          String
-  role            String   // user, assistant, system
-  content         String   @db.Text
-  category        String?  // What it was categorized as (people, projects, ideas, admin, Needs Review)
-  destinationUrl  String?  @map("destination_url") @db.Text // Where it was filed
-  timestamp       DateTime @default(now())
+  id             Int      @id @default(autoincrement())
+  tenantId       String
+  userId         String
+  role           String // user, assistant, system
+  content        String   @db.Text
+  category       String? // What it was categorized as (people, projects, ideas, admin, Needs Review)
+  destinationUrl String?  @map("destination_url") @db.Text // Where it was filed
+  timestamp      DateTime @default(now())
 
-  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([tenantId, userId])
   @@index([tenantId, timestamp])
   @@index([tenantId, category])
@@ -1170,39 +1173,39 @@ model MessageLog {
 }
 
 model Prediction {
-  id              Int      @id @default(autoincrement())
-  tenantId        String
-  userId          String
-  predictionType  String   @map("prediction_type") // capture, action, form_field
-  predictedValue  String   @db.Text @map("predicted_value") // JSON predicted value
-  confidence      Float
-  context         String?  @db.Text // JSON context
-  accepted        Boolean?
-  createdAt       DateTime @default(now()) @map("created_at")
+  id             Int      @id @default(autoincrement())
+  tenantId       String
+  userId         String
+  predictionType String   @map("prediction_type") // capture, action, form_field
+  predictedValue String   @map("predicted_value") @db.Text // JSON predicted value
+  confidence     Float
+  context        String?  @db.Text // JSON context
+  accepted       Boolean?
+  createdAt      DateTime @default(now()) @map("created_at")
 
-  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([tenantId, userId])
   @@index([tenantId, predictionType])
   @@map("predictions")
 }
 
 model AudioNote {
-  id              Int      @id @default(autoincrement())
-  tenantId        String
-  itemType        String   @map("item_type")
-  itemId          Int      @map("item_id")
-  filename        String
-  filepath        String
-  duration        Int?     // seconds
-  transcription   String?  @db.Text
-  transcriptionConfidence Float? @map("transcription_confidence")
-  transcribedAt   DateTime? @map("transcribed_at")
-  createdAt       DateTime @default(now()) @map("created_at")
+  id                      Int       @id @default(autoincrement())
+  tenantId                String
+  itemType                String    @map("item_type")
+  itemId                  Int       @map("item_id")
+  filename                String
+  filepath                String
+  duration                Int? // seconds
+  transcription           String?   @db.Text
+  transcriptionConfidence Float?    @map("transcription_confidence")
+  transcribedAt           DateTime? @map("transcribed_at")
+  createdAt               DateTime  @default(now()) @map("created_at")
 
-  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   @@index([tenantId, itemType, itemId])
   @@map("audio_notes")
 }
@@ -1215,9 +1218,9 @@ model TaskDependency {
   dependencyType  String   @default("blocks") @map("dependency_type") // blocks, blocked_by
   createdAt       DateTime @default(now()) @map("created_at")
 
-  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  task            Admin    @relation("BlockingTasks", fields: [taskId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  dependsOnTask   Admin    @relation("BlockedTasks", fields: [dependsOnTaskId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  tenant        Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  task          Admin  @relation("BlockingTasks", fields: [taskId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  dependsOnTask Admin  @relation("BlockedTasks", fields: [dependsOnTaskId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@unique([tenantId, taskId, dependsOnTaskId])
   @@index([tenantId, taskId])
@@ -1227,17 +1230,38 @@ model TaskDependency {
 }
 
 model TaskTemplate {
-  id              Int      @id @default(autoincrement())
-  tenantId        String
-  name            String
-  description     String?   @db.Text
-  fields          String    @db.Text // JSON with template fields
-  defaultValues   String?   @db.Text @map("default_values") // JSON with default values
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id            Int      @id @default(autoincrement())
+  tenantId      String
+  name          String
+  description   String?  @db.Text
+  fields        String   @db.Text // JSON with template fields
+  defaultValues String?  @map("default_values") @db.Text // JSON with default values
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
-  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId])
   @@map("task_templates")
+}
+
+model ServiceAccount {
+  id          Int       @id @default(autoincrement())
+  tenantId    String
+  name        String
+  description String?   @db.Text
+  tokenHash   String    @unique @map("token_hash") // Hashed token (never store plaintext)
+  lastUsedAt  DateTime? @map("last_used_at")
+  expiresAt   DateTime? @map("expires_at")
+  revokedAt   DateTime? @map("revoked_at")
+  createdBy   String?   @map("created_by") // userId who created it
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([tokenHash])
+  @@index([revokedAt])
+  @@map("service_accounts")
 }

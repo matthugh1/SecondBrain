@@ -1,5 +1,7 @@
 import { OpenAI } from 'openai'
 import * as actionsRepo from '@/lib/db/repositories/actions'
+import { retryAICall } from '@/lib/utils/retry'
+import { timeoutAICall } from '@/lib/utils/timeout'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -67,21 +69,28 @@ Be specific with actionParams. For example:
 Return ONLY valid JSON, no markdown formatting.`
 
   try {
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a helpful task planning assistant. Always return valid JSON.',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      temperature: 0.7,
-      response_format: { type: 'json_object' },
-    })
+    // Apply retry and timeout to AI API call
+    const response = await retryAICall(() =>
+      timeoutAICall(
+        openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a helpful task planning assistant. Always return valid JSON.',
+            },
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+          temperature: 0.7,
+          response_format: { type: 'json_object' },
+        })
+      )
+    )
+      )
+    )
 
     const content = response.choices[0]?.message?.content
     if (!content) {

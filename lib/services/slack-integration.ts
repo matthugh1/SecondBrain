@@ -92,7 +92,8 @@ export async function sendSlackMessage(
   }
 
   try {
-    const response = await fetch('https://slack.com/api/chat.postMessage', {
+    const { fetchWithRetryAndTimeout } = await import('@/lib/utils/timeout')
+    const response = await fetchWithRetryAndTimeout('https://slack.com/api/chat.postMessage', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${accessToken}`,

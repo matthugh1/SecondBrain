@@ -29,10 +29,11 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { tool, parameters, tenantId: bodyTenantId } = body
+    const { tool, parameters } = body
     
-    // Check authentication (pass body to allow tenantId from request)
-    const tenantCheck = await requireTenantOrApiKey(request, { tenantId: bodyTenantId })
+    // SECURITY: requireTenantOrApiKey now requires session-based tenant lookup
+    // It no longer accepts tenantId from request body to prevent spoofing
+    const tenantCheck = await requireTenantOrApiKey(request)
     if (tenantCheck instanceof NextResponse) {
       return tenantCheck
     }

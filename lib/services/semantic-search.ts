@@ -2,6 +2,8 @@ import OpenAI from 'openai'
 import Anthropic from '@anthropic-ai/sdk'
 import { prisma } from '@/lib/db/index'
 import type { Category } from '@/types'
+import { retryAICall } from '@/lib/utils/retry'
+import { timeoutAICall } from '@/lib/utils/timeout'
 
 const aiProvider = process.env.AI_PROVIDER || 'openai'
 
@@ -26,17 +28,27 @@ export async function generateEmbedding(text: string): Promise<number[]> {
         throw new Error('OpenAI API key required for embeddings (even when using Anthropic for chat)')
       }
       const openai = new OpenAI({ apiKey: openaiKey })
-      const response = await openai.embeddings.create({
-        model: 'text-embedding-3-small',
-        input: text,
-      })
+      // Apply retry and timeout to embedding API call
+      const response = await retryAICall(() =>
+        timeoutAICall(
+          openai.embeddings.create({
+            model: 'text-embedding-3-small',
+            input: text,
+          })
+        )
+      )
       return response.data[0].embedding
     } else {
       const openai = new OpenAI({ apiKey })
-      const response = await openai.embeddings.create({
-        model: 'text-embedding-3-small',
-        input: text,
-      })
+      // Apply retry and timeout to embedding API call
+      const response = await retryAICall(() =>
+        timeoutAICall(
+          openai.embeddings.create({
+            model: 'text-embedding-3-small',
+            input: text,
+          })
+        )
+      )
       return response.data[0].embedding
     }
   } catch (error) {

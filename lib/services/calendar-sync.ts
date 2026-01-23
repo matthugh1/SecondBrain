@@ -50,8 +50,9 @@ export async function syncTaskToCalendar(
     let eventId: string
 
     if (existingSync) {
-      // Update existing event
-      const updateResponse = await fetch(
+      // Update existing event (with retry and timeout)
+      const { fetchWithRetryAndTimeout } = await import('@/lib/utils/timeout')
+      const updateResponse = await fetchWithRetryAndTimeout(
         `https://www.googleapis.com/calendar/v3/calendars/primary/events/${existingSync.calendarEventId}`,
         {
           method: 'PUT',
@@ -70,8 +71,9 @@ export async function syncTaskToCalendar(
       const updatedEvent = await updateResponse.json()
       eventId = updatedEvent.id
     } else {
-      // Create new event
-      const createResponse = await fetch(
+      // Create new event (with retry and timeout)
+      const { fetchWithRetryAndTimeout } = await import('@/lib/utils/timeout')
+      const createResponse = await fetchWithRetryAndTimeout(
         'https://www.googleapis.com/calendar/v3/calendars/primary/events',
         {
           method: 'POST',
@@ -132,7 +134,8 @@ export async function syncCalendarToSecondBrain(
     const timeMin = new Date().toISOString()
     const timeMax = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // Next 7 days
 
-    const response = await fetch(
+    const { fetchWithRetryAndTimeout } = await import('@/lib/utils/timeout')
+    const response = await fetchWithRetryAndTimeout(
       `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&maxResults=${maxResults}&singleEvents=true&orderBy=startTime`,
       {
         headers: {

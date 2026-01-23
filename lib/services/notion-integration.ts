@@ -86,8 +86,9 @@ export async function syncItemToNotion(
       return { success: false, error: 'No Notion database configured' }
     }
 
-    // Create page in Notion
-    const response = await fetch('https://api.notion.com/v1/pages', {
+    // Create page in Notion (with retry and timeout)
+    const { fetchWithRetryAndTimeout } = await import('@/lib/utils/timeout')
+    const response = await fetchWithRetryAndTimeout('https://api.notion.com/v1/pages', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -151,8 +152,9 @@ export async function createNotionPageFromCapture(
       return { success: false, error: 'No Notion database configured' }
     }
 
-    // Create page with capture content
-    const response = await fetch('https://api.notion.com/v1/pages', {
+    // Create page with capture content (with retry and timeout)
+    const { fetchWithRetryAndTimeout } = await import('@/lib/utils/timeout')
+    const response = await fetchWithRetryAndTimeout('https://api.notion.com/v1/pages', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${accessToken}`,

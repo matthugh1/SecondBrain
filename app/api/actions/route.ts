@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireTenant } from '@/lib/auth/utils'
 import * as actionsRepo from '@/lib/db/repositories/actions'
 import { executeAction } from '@/lib/services/actions'
+import { validateRequest } from '@/lib/middleware/validate-request'
+import { handleError } from '@/lib/middleware/error-handler'
+import { createActionSchema } from '@/lib/validation/schemas'
 
 export async function GET(request: NextRequest) {
   try {
@@ -25,11 +28,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ actions })
   } catch (error) {
-    console.error('Error fetching actions:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return handleError(error, '/api/actions')
   }
 }
 
@@ -41,15 +40,14 @@ export async function POST(request: NextRequest) {
     }
     const { tenantId, userId } = tenantCheck
 
-    const body = await request.json()
-    const { actionType, targetType, targetId, parameters, requiresApproval, executeImmediately } = body
-
-    if (!actionType) {
-      return NextResponse.json(
-        { error: 'actionType is required' },
-        { status: 400 }
-      )
+    // Validate request body
+    const validation = await validateRequest(createActionSchema, request)
+    if (!validation.success) {
+      return validation.response
     }
+
+    const { data } = validation
+    const { actionType, targetType, targetId, parameters, requiresApproval, executeImmediately } = data
 
     const actionId = await actionsRepo.createAction(tenantId, {
       userId,
@@ -75,10 +73,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ action })
   } catch (error) {
-    console.error('Error creating action:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return handleError(error, '/api/actions')
   }
 }

@@ -171,3 +171,46 @@ export async function deleteIntegration(
     },
   })
 }
+
+/**
+ * Get integration by Slack team ID
+ * Looks up integration where config contains the team_id
+ */
+export async function getIntegrationBySlackTeamId(
+  teamId: string
+): Promise<Integration | null> {
+  // Find all Slack integrations and filter by team_id in config
+  const integrations = await prisma.integration.findMany({
+    where: {
+      provider: 'slack',
+      status: 'active',
+    },
+  })
+
+  // Parse config and find matching team_id
+  for (const integration of integrations) {
+    try {
+      const config = JSON.parse(integration.config)
+      // Slack team_id might be stored as team_id, teamId, or in metadata
+      if (config.team_id === teamId || config.teamId === teamId || config.metadata?.team_id === teamId) {
+        return {
+          id: integration.id,
+          tenantId: integration.tenantId,
+          provider: integration.provider as IntegrationProvider,
+          config,
+          status: integration.status as IntegrationStatus,
+          lastSync: integration.lastSync || undefined,
+          lastError: integration.lastError || undefined,
+          errorCount: integration.errorCount,
+          createdAt: integration.createdAt,
+          updatedAt: integration.updatedAt,
+        }
+      }
+    } catch {
+      // Skip integrations with invalid config
+      continue
+    }
+  }
+
+  return null
+}

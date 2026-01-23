@@ -6,6 +6,8 @@ import { getActiveRulePrompt, getEnabledRuleCategories, getRuleSettings } from '
 import { getRecentCorrections } from '@/lib/db/repositories/classification-learning'
 import { createTokenUsage } from '@/lib/db/repositories/token-usage'
 import { getCurrentMeetingContext } from './calendar-context'
+import { retryAICall } from '@/lib/utils/retry'
+import { timeoutAICall } from '@/lib/utils/timeout'
 
 const aiProvider = process.env.AI_PROVIDER || 'openai'
 
@@ -205,17 +207,22 @@ async function classifyWithOpenAI(tenantId: string, messageText: string): Promis
   let result: ClassificationResult | undefined
 
   try {
-    const response = await openai.chat.completions.create({
-      model,
-      messages: [
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      response_format: { type: 'json_object' },
-      temperature: 0.3,
-    })
+    // Apply retry and timeout to AI API call
+    const response = await retryAICall(() =>
+      timeoutAICall(
+        openai.chat.completions.create({
+          model,
+          messages: [
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+          response_format: { type: 'json_object' },
+          temperature: 0.3,
+        })
+      )
+    )
 
     responseText = response.choices[0]?.message?.content || undefined
     if (!responseText) {
@@ -310,16 +317,21 @@ async function classifyWithAnthropic(tenantId: string, messageText: string): Pro
   let result: ClassificationResult | undefined
 
   try {
-    const response = await anthropic.messages.create({
-      model,
-      max_tokens: 1024,
-      messages: [
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-    })
+    // Apply retry and timeout to AI API call
+    const response = await retryAICall(() =>
+      timeoutAICall(
+        anthropic.messages.create({
+          model,
+          max_tokens: 1024,
+          messages: [
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+        })
+      )
+    )
 
     const content = response.content[0]
     if (content.type !== 'text') {

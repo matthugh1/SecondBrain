@@ -4,6 +4,13 @@ import * as projectsRepo from '@/lib/db/repositories/projects'
 import * as ideasRepo from '@/lib/db/repositories/ideas'
 import * as adminRepo from '@/lib/db/repositories/admin'
 import { requireTenant } from '@/lib/auth/utils'
+import { validateRequest } from '@/lib/middleware/validate-request'
+import {
+  updatePersonSchema,
+  updateProjectSchema,
+  updateIdeaSchema,
+  updateAdminSchema,
+} from '@/lib/validation/schemas'
 import type { Person, Project, Idea, Admin } from '@/types'
 
 const validDatabases = ['people', 'projects', 'ideas', 'admin']
@@ -53,11 +60,8 @@ export async function GET(
 
     return NextResponse.json(data)
   } catch (error) {
-    console.error(`Error fetching ${params.database}/${params.id}:`, error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    const { handleError } = await import('@/lib/middleware/error-handler')
+    return handleError(error, `/api/${params.database}/${params.id}`)
   }
 }
 
@@ -83,7 +87,36 @@ export async function PATCH(
       )
     }
 
-    const body = await request.json()
+    // Validate request body based on database type
+    let validation: { success: true; data: any } | { success: false; response: NextResponse }
+    let schema: any
+
+    switch (database) {
+      case 'people':
+        schema = updatePersonSchema
+        break
+      case 'projects':
+        schema = updateProjectSchema
+        break
+      case 'ideas':
+        schema = updateIdeaSchema
+        break
+      case 'admin':
+        schema = updateAdminSchema
+        break
+      default:
+        return NextResponse.json(
+          { error: 'Invalid database' },
+          { status: 400 }
+        )
+    }
+
+    validation = await validateRequest(schema, request)
+    if (!validation.success) {
+      return validation.response
+    }
+
+    const body = validation.data
 
     // Get old data for logging
     let oldData: any = null
@@ -171,10 +204,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error(`Error deleting ${params.database}/${params.id}:`, error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    const { handleError } = await import('@/lib/middleware/error-handler')
+    return handleError(error, `/api/${params.database}/${params.id}`)
   }
 }

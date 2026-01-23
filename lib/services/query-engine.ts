@@ -107,11 +107,17 @@ Return JSON:
   try {
     if (aiProvider === 'anthropic') {
       const anthropic = new Anthropic({ apiKey })
-      const response = await anthropic.messages.create({
-        model: 'claude-3-5-haiku-20241022',
-        max_tokens: 512,
-        messages: [{ role: 'user', content: prompt }],
-      })
+      const { retryAICall } = await import('@/lib/utils/retry')
+      const { timeoutAICall } = await import('@/lib/utils/timeout')
+      const response = await retryAICall(() =>
+        timeoutAICall(
+          anthropic.messages.create({
+            model: 'claude-3-5-haiku-20241022',
+            max_tokens: 512,
+            messages: [{ role: 'user', content: prompt }],
+          })
+        )
+      )
 
       const content = response.content[0]
       if (content.type === 'text') {
@@ -123,12 +129,18 @@ Return JSON:
       }
     } else {
       const openai = new OpenAI({ apiKey })
-      const response = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [{ role: 'user', content: prompt }],
-        response_format: { type: 'json_object' },
-        temperature: 0.1,
-      })
+      const { retryAICall } = await import('@/lib/utils/retry')
+      const { timeoutAICall } = await import('@/lib/utils/timeout')
+      const response = await retryAICall(() =>
+        timeoutAICall(
+          openai.chat.completions.create({
+            model: 'gpt-4o-mini',
+            messages: [{ role: 'user', content: prompt }],
+            response_format: { type: 'json_object' },
+            temperature: 0.1,
+          })
+        )
+      )
 
       const content = response.choices[0]?.message?.content
       if (content) {

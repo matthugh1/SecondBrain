@@ -1,5 +1,24 @@
 #!/usr/bin/env node
 
+// Load environment variables from .env file
+import { config } from 'dotenv'
+import { resolve, dirname } from 'path'
+import { fileURLToPath } from 'url'
+import { existsSync } from 'fs'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+
+// Load .env.local first (if exists), then .env
+const envLocalPath = resolve(__dirname, '.env.local')
+const envPath = resolve(__dirname, '.env')
+
+if (existsSync(envLocalPath)) {
+  config({ path: envLocalPath })
+} else if (existsSync(envPath)) {
+  config({ path: envPath })
+}
+
 import { Server } from '@modelcontextprotocol/sdk/server/index.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import {
@@ -10,25 +29,29 @@ import {
 } from '@modelcontextprotocol/sdk/types.js'
 
 const MCP_SERVER_URL = process.env.MCP_SERVER_URL || 'http://localhost:3000'
-const MCP_API_KEY = process.env.MCP_API_KEY
-const MCP_TENANT_ID = process.env.MCP_TENANT_ID
+// Use service account token (preferred) or legacy API key
+const MCP_SERVICE_ACCOUNT_TOKEN = process.env.MCP_SERVICE_ACCOUNT_TOKEN
+const MCP_API_KEY = process.env.MCP_API_KEY // Legacy, deprecated
 
-async function callApiEndpoint(endpoint: string, body: any, tenantId?: string): Promise<any> {
+async function callApiEndpoint(endpoint: string, body: any): Promise<any> {
   const url = `${MCP_SERVER_URL}${endpoint}`
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   }
 
-  // Add API key if provided
-  if (MCP_API_KEY) {
+  // Use service account token (preferred) or legacy API key
+  if (MCP_SERVICE_ACCOUNT_TOKEN) {
+    headers['Authorization'] = `Bearer ${MCP_SERVICE_ACCOUNT_TOKEN}`
+  } else if (MCP_API_KEY) {
+    // Legacy API key support (deprecated)
+    console.warn('⚠️  Using legacy MCP_API_KEY. Please migrate to MCP_SERVICE_ACCOUNT_TOKEN')
     headers['Authorization'] = `Bearer ${MCP_API_KEY}`
+  } else {
+    throw new Error('MCP_SERVICE_ACCOUNT_TOKEN or MCP_API_KEY must be set')
   }
 
-  // Add tenantId to request body if provided (for API key auth)
+  // SECURITY: Service account token includes tenantId, no need to send in body
   const requestBody = { ...body }
-  if (tenantId || MCP_TENANT_ID) {
-    requestBody.tenantId = tenantId || MCP_TENANT_ID
-  }
 
   const response = await fetch(url, {
     method: 'POST',
@@ -62,11 +85,16 @@ async function main() {
 
   server.setRequestHandler(ListToolsRequestSchema, async () => {
     try {
+      const headers: Record<string, string> = {}
+      if (MCP_SERVICE_ACCOUNT_TOKEN) {
+        headers['Authorization'] = `Bearer ${MCP_SERVICE_ACCOUNT_TOKEN}`
+      } else if (MCP_API_KEY) {
+        headers['Authorization'] = `Bearer ${MCP_API_KEY}`
+      }
+
       const response = await fetch(`${MCP_SERVER_URL}/api/mcp/tools`, {
         method: 'GET',
-        headers: MCP_API_KEY
-          ? { Authorization: `Bearer ${MCP_API_KEY}` }
-          : {},
+        headers,
       })
 
       if (!response.ok) {
@@ -109,16 +137,14 @@ async function main() {
     const { name, arguments: args } = request.params
 
     try {
-      // Get tenantId from arguments if provided, otherwise use env variable
-      const tenantId = (args as any)?.tenantId || MCP_TENANT_ID
-      
+      // SECURITY: Service account token includes tenantId securely
+      // No need to pass tenantId in request body
       const result = await callApiEndpoint(
         '/api/mcp/tools',
         {
           tool: name,
           parameters: args || {},
-        },
-        tenantId
+        }
       )
 
       return {

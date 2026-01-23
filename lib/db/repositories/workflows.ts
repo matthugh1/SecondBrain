@@ -164,7 +164,8 @@ export async function recordWorkflowExecution(
   status: 'success' | 'failed' | 'skipped',
   triggerData?: Record<string, any>,
   executedActions?: WorkflowAction[],
-  errorMessage?: string
+  errorMessage?: string,
+  idempotencyKey?: string
 ): Promise<void> {
   await prisma.workflowExecution.create({
     data: {
@@ -174,6 +175,7 @@ export async function recordWorkflowExecution(
       triggerData: triggerData ? JSON.stringify(triggerData) : null,
       executedActions: executedActions ? JSON.stringify(executedActions) : null,
       errorMessage: errorMessage || null,
+      idempotencyKey: idempotencyKey || null,
     },
   })
 

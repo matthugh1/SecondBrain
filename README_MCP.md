@@ -28,16 +28,44 @@ npm install
 Set the following environment variables:
 
 - `MCP_SERVER_URL` - URL of your Next.js application (default: `http://localhost:3000`)
-- `MCP_API_KEY` (optional) - API key for authentication if not using sessions
-- `MCP_TENANT_ID` (optional) - Default tenant ID to use when making API requests
+- `MCP_SERVICE_ACCOUNT_TOKEN` (recommended) - Service account token for secure authentication
+- `MCP_API_KEY` (deprecated) - Legacy API key (requires active session, not recommended)
 
-You can set these in your `.env` file or as environment variables when running the server.
+**Service Account Setup (Recommended):**
 
-**Note:** If using API key authentication, you must either:
-- Set `MCP_TENANT_ID` environment variable, OR
-- Pass `tenantId` in the tool arguments
+Service accounts are **automatically created** when a tenant is created. Each tenant gets a default "MCP Server" service account.
 
-If neither is provided and no session is available, API requests will fail.
+To get your service account token:
+
+1. **Via API** (requires authenticated session):
+   ```bash
+   curl -X GET https://your-app.com/api/service-accounts \
+     -H "Cookie: next-auth.session-token=<your-session>"
+   ```
+   Look for the service account named "MCP Server" and note its ID.
+
+2. **Via Setup Script** (for local development):
+   ```bash
+   npx tsx scripts/create-service-account.ts
+   ```
+   This will create/retrieve a service account and automatically update `mcp-server/.env`.
+
+3. **Set the token**:
+   ```bash
+   export MCP_SERVICE_ACCOUNT_TOKEN="sa_..."
+   ```
+   Or add it to `mcp-server/.env.local`:
+   ```
+   MCP_SERVICE_ACCOUNT_TOKEN=sa_...
+   ```
+
+**Note**: The token is only shown when the service account is first created. If you need a new token, create a new service account via the API.
+
+The service account token securely includes tenant context - no need to set `MCP_TENANT_ID`
+
+**Legacy API Key (Deprecated):**
+
+The `MCP_API_KEY` method still works but requires an active user session and is less secure. It's recommended to migrate to service account tokens.
 
 ### 3. Running the Server
 
@@ -105,8 +133,16 @@ To use this MCP server with a chat client (like Cursor), configure it to run the
 
 The MCP server communicates with the Next.js API routes. Authentication is handled via:
 
-1. **API Key** (if `MCP_API_KEY` is set): The server sends the API key in the `Authorization` header
-2. **Session-based** (future): Pass session tokens from the chat client
+1. **Service Account Token** (recommended): Secure, tenant-scoped token that doesn't require user sessions
+   - Set `MCP_SERVICE_ACCOUNT_TOKEN` environment variable
+   - Token format: `sa_<hex>` (e.g., `sa_a1b2c3d4...`)
+   - Tokens can be revoked or expired
+   - Automatically includes tenant context
+
+2. **Legacy API Key** (deprecated): Requires active user session
+   - Set `MCP_API_KEY` environment variable
+   - Less secure, requires session management
+   - Will be removed in a future version
 
 ## Troubleshooting
 
