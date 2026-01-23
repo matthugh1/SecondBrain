@@ -63,22 +63,27 @@ export async function createTokenUsage(tenantId: string, record: TokenUsageRecor
         totalTokens: record.totalTokens,
       },
     })
-    console.log('✅ Token usage recorded:', {
+    const { getContextLogger } = await import('@/lib/logger/context')
+    const logger = getContextLogger()
+    logger.info({
       provider: record.provider,
       operationType: record.operationType,
       totalTokens: record.totalTokens,
-    })
+      tenantId: tenantId.substring(0, 8) + '...',
+    }, 'Token usage recorded')
   } catch (error: any) {
     // Non-blocking: log error but don't throw
+    const { getContextLogger } = await import('@/lib/logger/context')
+    const logger = getContextLogger()
     const errorMessage = error?.message || String(error)
     const errorCode = error?.code
-    console.error('❌ Failed to record token usage:', {
+    logger.error({
       error: errorMessage,
       code: errorCode,
       provider: record.provider,
       operationType: record.operationType,
-      tenantId: tenantId.substring(0, 8) + '...', // Log partial tenantId for debugging
-    })
+      tenantId: tenantId.substring(0, 8) + '...',
+    }, 'Failed to record token usage')
   }
 }
 

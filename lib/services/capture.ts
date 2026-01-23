@@ -266,10 +266,12 @@ export async function captureMessage(
       }
     }
 
-    // Log extracted fields for debugging
-    console.log('📋 Extracted fields:', classification.fields)
+    // Log extracted fields for debugging (using structured logger)
+    const { getContextLogger } = await import('@/lib/logger/context')
+    const logger = getContextLogger()
+    logger.debug({ fields: classification.fields }, 'Extracted fields from classification')
     if (classification.fields.due_date) {
-      console.log('📅 Due date extracted:', classification.fields.due_date)
+      logger.debug({ dueDate: classification.fields.due_date }, 'Due date extracted')
     }
 
     // Determine if we should file this or mark for review

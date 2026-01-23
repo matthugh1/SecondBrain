@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { AppError, isAppError } from '@/lib/errors/app-error'
+import { getContextLogger } from '@/lib/logger/context'
 
 /**
  * Sanitize error message for client
@@ -59,16 +60,16 @@ function sanitizeError(error: unknown): {
  * Logs full error details server-side and returns sanitized error to client
  */
 export function handleError(error: unknown, context?: string): NextResponse {
-  // Log full error details server-side
+  // Log full error details server-side using structured logger
+  const logger = getContextLogger()
   const errorDetails = {
     message: error instanceof Error ? error.message : String(error),
     stack: error instanceof Error ? error.stack : undefined,
     name: error instanceof Error ? error.name : undefined,
     context,
-    timestamp: new Date().toISOString(),
   }
 
-  console.error('Error occurred:', errorDetails)
+  logger.error(errorDetails, 'Error occurred')
 
   // Sanitize error for client
   const sanitized = sanitizeError(error)
