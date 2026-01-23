@@ -136,14 +136,12 @@ export type EmailPostRequest = z.infer<typeof emailPostSchema>
 // Actions endpoint schema
 export const createActionSchema = z.object({
   actionType: z.enum([
-    'create_item',
-    'update_item',
-    'delete_item',
-    'send_email',
-    'create_calendar_event',
-    'post_to_slack',
-    'create_notion_page',
-    'update_notion_page',
+    'create',
+    'update',
+    'delete',
+    'link',
+    'notify',
+    'schedule',
   ]),
   targetType: z.enum(['person', 'project', 'idea', 'admin']).optional(),
   targetId: z.number().int().positive().optional(),

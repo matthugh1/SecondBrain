@@ -91,6 +91,8 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DIRECT_URL: ${{ secrets.DIRECT_URL }}
+          PRISMA_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.DIRECT_URL }}
 
       - name: Deploy migrations
         if: steps.check-migrations.outputs.has_pending == 'true'
@@ -98,12 +100,16 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DIRECT_URL: ${{ secrets.DIRECT_URL }}
+          PRISMA_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.DIRECT_URL }}
 
       - name: Verify migration success
         run: npm run db:migrate:status
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DIRECT_URL: ${{ secrets.DIRECT_URL }}
+          PRISMA_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.DIRECT_URL }}
 
   deploy-preview:
     name: Deploy Preview (CLI)
