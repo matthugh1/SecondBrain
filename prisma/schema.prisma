@@ -441,6 +441,7 @@ model Comment {
 model ActionHistory {
   id         Int      @id @default(autoincrement())
   tenantId   String
+  userId     String?  @map("user_id") // Who performed the action
   actionType String   @map("action_type")
   itemType   String   @map("item_type")
   itemId     Int?     @map("item_id")
@@ -448,12 +449,21 @@ model ActionHistory {
   newData    String?  @map("new_data") @db.Text
   timestamp  DateTime @default(now())
   undone     Int      @default(0)
+  // Audit fields
+  requestId  String?  @map("request_id") // For request correlation
+  ipAddress  String?  @map("ip_address") // IP address of requester
+  userAgent  String?  @map("user_agent") @db.Text // User agent string
+  details    String?  @db.Text // Additional JSON details
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId, itemType, itemId])
+  @@index([tenantId, timestamp])
+  @@index([userId, timestamp])
+  @@index([actionType, timestamp])
   @@index([timestamp])
   @@index([undone])
+  @@index([requestId])
   @@map("action_history")
 }
 

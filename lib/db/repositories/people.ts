@@ -1,5 +1,6 @@
 import { prisma } from '../index'
 import type { Person } from '@/types'
+import { auditCreate, auditUpdate, auditDelete } from '@/lib/middleware/audit-log'
 
 export async function createPerson(tenantId: string, person: Person): Promise<number> {
   const result = await prisma.person.create({
@@ -12,6 +13,10 @@ export async function createPerson(tenantId: string, person: Person): Promise<nu
       tags: person.tags || null,
     },
   })
+  
+  // Audit log the creation
+  await auditCreate(tenantId, 'people', result.id, person)
+  
   return result.id
 }
 
@@ -92,6 +97,9 @@ export async function getAllPeople(tenantId: string, includeArchived: boolean = 
 }
 
 export async function archivePerson(tenantId: string, id: number): Promise<void> {
+  // Get old data for audit log
+  const oldPerson = await getPersonById(tenantId, id)
+  
   await prisma.person.updateMany({
     where: {
       id,
@@ -103,6 +111,14 @@ export async function archivePerson(tenantId: string, id: number): Promise<void>
       updatedAt: new Date(),
     },
   })
+  
+  // Audit log the archive
+  if (oldPerson) {
+    const newPerson = await getPersonById(tenantId, id)
+    if (newPerson) {
+      await auditUpdate(tenantId, 'people', id, oldPerson, newPerson, { action: 'archive' })
+    }
+  }
 }
 
 export async function unarchivePerson(tenantId: string, id: number): Promise<void> {
@@ -120,6 +136,9 @@ export async function unarchivePerson(tenantId: string, id: number): Promise<voi
 }
 
 export async function updatePerson(tenantId: string, id: number, updates: Partial<Person>): Promise<void> {
+  // Get old data for audit log
+  const oldPerson = await getPersonById(tenantId, id)
+  
   const data: any = {
     updatedAt: new Date(),
   }
@@ -137,13 +156,29 @@ export async function updatePerson(tenantId: string, id: number, updates: Partia
     },
     data,
   })
+  
+  // Audit log the update
+  if (oldPerson) {
+    const newPerson = await getPersonById(tenantId, id)
+    if (newPerson) {
+      await auditUpdate(tenantId, 'people', id, oldPerson, newPerson)
+    }
+  }
 }
 
 export async function deletePerson(tenantId: string, id: number): Promise<void> {
+  // Get old data for audit log
+  const oldPerson = await getPersonById(tenantId, id)
+  
   await prisma.person.deleteMany({
     where: {
       id,
       tenantId,
     },
   })
+  
+  // Audit log the deletion
+  if (oldPerson) {
+    await auditDelete(tenantId, 'people', id, oldPerson)
+  }
 }

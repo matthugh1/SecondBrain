@@ -1,5 +1,6 @@
 import { prisma } from '../index'
 import type { Project, ProjectStatus } from '@/types'
+import { auditCreate, auditUpdate, auditDelete } from '@/lib/middleware/audit-log'
 
 export async function createProject(tenantId: string, project: Project): Promise<number> {
   const result = await prisma.project.create({
@@ -11,6 +12,10 @@ export async function createProject(tenantId: string, project: Project): Promise
       notes: project.notes || null,
     },
   })
+  
+  // Audit log the creation
+  await auditCreate(tenantId, 'projects', result.id, project)
+  
   return result.id
 }
 
@@ -112,6 +117,9 @@ export async function unarchiveProject(tenantId: string, id: number): Promise<vo
 }
 
 export async function updateProject(tenantId: string, id: number, updates: Partial<Project>): Promise<void> {
+  // Get old data for audit log
+  const oldProject = await getProjectById(tenantId, id)
+  
   const data: any = {
     updatedAt: new Date(),
   }
@@ -128,13 +136,29 @@ export async function updateProject(tenantId: string, id: number, updates: Parti
     },
     data,
   })
+  
+  // Audit log the update
+  if (oldProject) {
+    const newProject = await getProjectById(tenantId, id)
+    if (newProject) {
+      await auditUpdate(tenantId, 'projects', id, oldProject, newProject)
+    }
+  }
 }
 
 export async function deleteProject(tenantId: string, id: number): Promise<void> {
+  // Get old data for audit log
+  const oldProject = await getProjectById(tenantId, id)
+  
   await prisma.project.deleteMany({
     where: {
       id,
       tenantId,
     },
   })
+  
+  // Audit log the deletion
+  if (oldProject) {
+    await auditDelete(tenantId, 'projects', id, oldProject)
+  }
 }

@@ -5,6 +5,7 @@ export type ActionType = 'create' | 'update' | 'delete' | 'archive' | 'unarchive
 export interface ActionHistory {
   id?: number
   tenant_id?: string
+  user_id?: string | null // Who performed the action
   action_type: ActionType
   item_type: string
   item_id?: number | null
@@ -12,18 +13,29 @@ export interface ActionHistory {
   new_data?: string | null
   timestamp?: string
   undone?: number
+  // Audit fields
+  request_id?: string | null
+  ip_address?: string | null
+  user_agent?: string | null
+  details?: string | null
 }
 
 export async function createActionHistory(tenantId: string, action: ActionHistory): Promise<number> {
   const result = await prisma.actionHistory.create({
     data: {
       tenantId,
+      userId: action.user_id || null,
       actionType: action.action_type,
       itemType: action.item_type,
       itemId: action.item_id || null,
       oldData: action.old_data || null,
       newData: action.new_data || null,
       undone: action.undone || 0,
+      // Audit fields
+      requestId: action.request_id || null,
+      ipAddress: action.ip_address || null,
+      userAgent: action.user_agent || null,
+      details: action.details || null,
     },
   })
   return result.id
@@ -40,6 +52,7 @@ export async function getActionHistoryById(tenantId: string, id: number): Promis
   return {
     id: row.id,
     tenant_id: row.tenantId,
+    user_id: row.userId || null,
     action_type: row.actionType as ActionType,
     item_type: row.itemType,
     item_id: row.itemId || null,
@@ -47,6 +60,10 @@ export async function getActionHistoryById(tenantId: string, id: number): Promis
     new_data: row.newData || null,
     timestamp: row.timestamp.toISOString(),
     undone: row.undone,
+    request_id: row.requestId || null,
+    ip_address: row.ipAddress || null,
+    user_agent: row.userAgent || null,
+    details: row.details || null,
   }
 }
 
@@ -62,6 +79,7 @@ export async function getRecentActions(tenantId: string, limit: number = 50): Pr
   return rows.map(row => ({
     id: row.id,
     tenant_id: row.tenantId,
+    user_id: row.userId || null,
     action_type: row.actionType as ActionType,
     item_type: row.itemType,
     item_id: row.itemId || null,
@@ -69,6 +87,10 @@ export async function getRecentActions(tenantId: string, limit: number = 50): Pr
     new_data: row.newData || null,
     timestamp: row.timestamp.toISOString(),
     undone: row.undone,
+    request_id: row.requestId || null,
+    ip_address: row.ipAddress || null,
+    user_agent: row.userAgent || null,
+    details: row.details || null,
   }))
 }
 
@@ -84,6 +106,7 @@ export async function getLastUndoneAction(tenantId: string): Promise<ActionHisto
   return {
     id: row.id,
     tenant_id: row.tenantId,
+    user_id: row.userId || null,
     action_type: row.actionType as ActionType,
     item_type: row.itemType,
     item_id: row.itemId || null,
@@ -91,6 +114,10 @@ export async function getLastUndoneAction(tenantId: string): Promise<ActionHisto
     new_data: row.newData || null,
     timestamp: row.timestamp.toISOString(),
     undone: row.undone,
+    request_id: row.requestId || null,
+    ip_address: row.ipAddress || null,
+    user_agent: row.userAgent || null,
+    details: row.details || null,
   }
 }
 
@@ -117,6 +144,7 @@ export async function getUndoneActions(tenantId: string): Promise<ActionHistory[
   return rows.map(row => ({
     id: row.id,
     tenant_id: row.tenantId,
+    user_id: row.userId || null,
     action_type: row.actionType as ActionType,
     item_type: row.itemType,
     item_id: row.itemId || null,
@@ -124,6 +152,10 @@ export async function getUndoneActions(tenantId: string): Promise<ActionHistory[
     new_data: row.newData || null,
     timestamp: row.timestamp.toISOString(),
     undone: row.undone,
+    request_id: row.requestId || null,
+    ip_address: row.ipAddress || null,
+    user_agent: row.userAgent || null,
+    details: row.details || null,
   }))
 }
 
@@ -151,6 +183,7 @@ export async function getLastRedoneAction(tenantId: string): Promise<ActionHisto
   return {
     id: row.id,
     tenant_id: row.tenantId,
+    user_id: row.userId || null,
     action_type: row.actionType as ActionType,
     item_type: row.itemType,
     item_id: row.itemId || null,
@@ -158,6 +191,10 @@ export async function getLastRedoneAction(tenantId: string): Promise<ActionHisto
     new_data: row.newData || null,
     timestamp: row.timestamp.toISOString(),
     undone: row.undone,
+    request_id: row.requestId || null,
+    ip_address: row.ipAddress || null,
+    user_agent: row.userAgent || null,
+    details: row.details || null,
   }
 }
 
