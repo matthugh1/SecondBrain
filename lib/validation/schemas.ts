@@ -157,11 +157,22 @@ export const createWorkflowSchema = z.object({
   name: z.string().min(1, 'Name is required').max(200, 'Name too long'),
   description: z.string().max(1000, 'Description too long').optional(),
   trigger: z.object({
-    type: z.string(),
-    conditions: z.record(z.any()).optional(),
+    type: z.enum(['item_created', 'item_updated', 'item_deleted', 'status_changed', 'scheduled']),
+    itemType: z.string().optional(),
+    conditions: z.array(z.object({
+      field: z.string(),
+      operator: z.string(),
+      value: z.any(),
+    })).optional(),
+    schedule: z.object({
+      frequency: z.enum(['daily', 'weekly', 'monthly']),
+      time: z.string().optional(),
+      day: z.number().int().optional(),
+    }).optional(),
   }),
   actions: z.array(z.object({
-    type: z.string(),
+    actionType: z.string(),
+    targetType: z.string().optional(),
     parameters: z.record(z.any()).optional(),
   })).min(1, 'At least one action is required'),
   priority: z.number().int().min(0).max(100).optional(),
