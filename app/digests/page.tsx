@@ -243,52 +243,55 @@ export default function DigestsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6 flex items-center justify-between">
+    <div className="min-h-screen bg-background">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-4xl font-black text-textPrimary tracking-tight">
               Digests & Reviews
             </h1>
-            <p className="mt-2 text-gray-600 dark:text-gray-400">
+            <p className="mt-2 text-textMuted font-medium italic">
               Daily digests and weekly reviews
             </p>
           </div>
           <Link
             href="/"
-            className="text-blue-600 hover:text-blue-900 dark:text-blue-400"
+            className="text-secondary hover:text-secondary/80 transition-colors font-medium flex items-center gap-1 group"
           >
-            ← Back to Dashboard
+            <svg className="w-4 h-4 transform group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to Dashboard
           </Link>
         </div>
 
-        <div className="mb-4 flex flex-wrap items-center gap-2">
+        <div className="mb-6 flex flex-wrap items-center gap-2">
           <button
             onClick={() => setFilter('all')}
-            className={`px-4 py-2 rounded ${
+            className={`px-4 py-2 rounded-lg font-medium transition-all ${
               filter === 'all'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                ? 'bg-primary text-textPrimary shadow-lg shadow-primary/20'
+                : 'bg-surface text-textMuted hover:bg-surfaceElevated border border-border/60'
             }`}
           >
             All
           </button>
           <button
             onClick={() => setFilter('daily')}
-            className={`px-4 py-2 rounded ${
+            className={`px-4 py-2 rounded-lg font-medium transition-all ${
               filter === 'daily'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                ? 'bg-primary text-textPrimary shadow-lg shadow-primary/20'
+                : 'bg-surface text-textMuted hover:bg-surfaceElevated border border-border/60'
             }`}
           >
             Daily
           </button>
           <button
             onClick={() => setFilter('weekly')}
-            className={`px-4 py-2 rounded ${
+            className={`px-4 py-2 rounded-lg font-medium transition-all ${
               filter === 'weekly'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                ? 'bg-primary text-textPrimary shadow-lg shadow-primary/20'
+                : 'bg-surface text-textMuted hover:bg-surfaceElevated border border-border/60'
             }`}
           >
             Weekly
@@ -297,10 +300,10 @@ export default function DigestsPage() {
             <button
               key={template.id}
               onClick={() => setFilter(template.id.toString())}
-              className={`px-4 py-2 rounded flex items-center gap-2 ${
+              className={`px-4 py-2 rounded-lg flex items-center gap-2 font-medium transition-all ${
                 filter === template.id.toString()
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                  ? 'bg-secondary text-textPrimary shadow-lg shadow-secondary/20'
+                  : 'bg-surface text-textMuted hover:bg-surfaceElevated border border-border/60'
               }`}
             >
               <span>{template.name}</span>
@@ -312,7 +315,7 @@ export default function DigestsPage() {
                   setCustomPrompt(template.prompt)
                   setShowCustomModal(true)
                 }}
-                className="text-xs hover:text-blue-300"
+                className="text-xs hover:text-secondary transition-colors"
                 title="Edit template"
               >
                 ✎
@@ -322,7 +325,7 @@ export default function DigestsPage() {
                   e.stopPropagation()
                   handleDeleteTemplate(template.id)
                 }}
-                className="text-xs hover:text-red-300"
+                className="text-xs hover:text-error transition-colors"
                 title="Delete template"
               >
                 ×
@@ -336,7 +339,7 @@ export default function DigestsPage() {
               setCustomName('')
               setShowCustomModal(true)
             }}
-            className="px-3 py-2 rounded bg-green-600 text-white hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600"
+            className="px-3 py-2 rounded-lg bg-secondary text-textPrimary hover:bg-secondary/90 shadow-lg shadow-secondary/20 transition-all font-medium"
             title="Create custom digest template"
           >
             +
@@ -345,10 +348,10 @@ export default function DigestsPage() {
           <button
             onClick={handleTriggerDailyDigest}
             disabled={triggering}
-            className={`px-4 py-2 rounded border ${
+            className={`px-4 py-2 rounded-lg border font-medium transition-all ${
               triggering
-                ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 border-gray-200 dark:border-gray-700 cursor-not-allowed'
-                : 'bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
+                ? 'bg-surfaceElevated text-textMuted border-border/60 cursor-not-allowed opacity-50'
+                : 'bg-surface text-textPrimary border-border/60 hover:bg-surfaceElevated'
             }`}
           >
             {triggering ? 'Running Daily Digest...' : 'Run Daily Digest'}
@@ -356,51 +359,51 @@ export default function DigestsPage() {
         </div>
 
         {triggerError && (
-          <div className="mb-4 rounded border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-200">
+          <div className="mb-4 rounded-lg border border-error/30 bg-error/10 px-4 py-2 text-sm text-error">
             {triggerError}
           </div>
         )}
         {triggerSuccess && (
-          <div className="mb-4 rounded border border-green-200 bg-green-50 px-4 py-2 text-sm text-green-700 dark:border-green-900 dark:bg-green-950 dark:text-green-200">
+          <div className="mb-4 rounded-lg border border-success/30 bg-success/10 px-4 py-2 text-sm text-success">
             {triggerSuccess}
           </div>
         )}
 
         {loading || generatingDigest ? (
-          <div className="text-center py-8">Generating digest...</div>
+          <div className="text-center py-8 text-textPrimary">Generating digest...</div>
         ) : filter !== 'all' && filter !== 'daily' && filter !== 'weekly' ? (
           // Custom template selected - show generated digest
           generatedDigest ? (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <div className="bg-surfaceElevated border border-border/60 rounded-xl shadow-xl p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <span className="px-3 py-1 rounded text-sm font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+                  <span className="px-3 py-1 rounded-lg text-sm font-medium bg-secondary/20 text-secondary border border-secondary/30">
                     ✨ {templates.find(t => t.id.toString() === filter)?.name || 'Custom Digest'}
                   </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400 italic">
+                  <span className="text-xs text-textMuted italic">
                     "{templates.find(t => t.id.toString() === filter)?.prompt}"
                   </span>
                 </div>
                 <button
                   onClick={() => generateDigestForTemplate(filter, templates.find(t => t.id.toString() === filter)?.prompt || '')}
-                  className="px-3 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600"
+                  className="px-3 py-1 text-sm rounded-lg border border-border/60 bg-surface text-textPrimary hover:bg-surfaceElevated transition-all font-medium"
                 >
                   Regenerate
                 </button>
               </div>
               <div className="prose dark:prose-invert max-w-none">
-                <pre className="whitespace-pre-wrap font-sans text-sm text-gray-900 dark:text-gray-100">
+                <pre className="whitespace-pre-wrap font-sans text-sm text-textPrimary">
                   {generatedDigest.content}
                 </pre>
               </div>
             </div>
           ) : (
-            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            <div className="text-center py-8 text-textMuted">
               Click on a custom digest template tab to generate a digest.
             </div>
           )
         ) : digests.length === 0 ? (
-          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+          <div className="text-center py-8 text-textMuted">
             No digests yet. Daily digests run every morning, weekly reviews run on Sundays.
           </div>
         ) : (
@@ -408,20 +411,20 @@ export default function DigestsPage() {
             {digests.map((digest) => (
               <div
                 key={digest.id}
-                className="bg-white dark:bg-gray-800 rounded-lg shadow p-6"
+                className="bg-surfaceElevated border border-border/60 rounded-xl shadow-xl p-6"
               >
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <span
-                      className={`px-3 py-1 rounded text-sm font-medium ${
+                      className={`px-3 py-1 rounded-lg text-sm font-medium border ${
                         digest.type === 'daily'
-                          ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200'
-                          : 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200'
+                          ? 'bg-primary/20 text-primary border-primary/30'
+                          : 'bg-info/20 text-info border-info/30'
                       }`}
                     >
                       {digest.type === 'daily' ? '📋 Daily Digest' : '💡 Weekly Review'}
                     </span>
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                    <span className="text-sm text-textMuted">
                       {new Date(digest.created).toLocaleDateString('en-US', {
                         weekday: 'long',
                         year: 'numeric',
@@ -432,7 +435,7 @@ export default function DigestsPage() {
                   </div>
                 </div>
                 <div className="prose dark:prose-invert max-w-none">
-                  <pre className="whitespace-pre-wrap font-sans text-sm text-gray-900 dark:text-gray-100">
+                  <pre className="whitespace-pre-wrap font-sans text-sm text-textPrimary">
                     {digest.content}
                   </pre>
                 </div>
@@ -443,19 +446,19 @@ export default function DigestsPage() {
 
         {/* Custom Digest Template Modal */}
         {showCustomModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full mx-4 p-6">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-surfaceElevated border border-border/60 rounded-xl shadow-2xl max-w-2xl w-full mx-4 p-6">
+              <h2 className="text-2xl font-black text-textPrimary mb-4">
                 {editingTemplate ? 'Edit Custom Digest Template' : 'Create Custom Digest Template'}
               </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              <p className="text-sm text-textMuted mb-4">
                 {editingTemplate 
                   ? 'Update your template. The digest will be regenerated with the new prompt when you click the tab.'
                   : 'Create a reusable template that will generate a digest on-demand. The digest will be generated fresh each time you click the tab.'}
               </p>
               
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-textPrimary mb-2">
                   Name *
                 </label>
                 <input
@@ -463,12 +466,12 @@ export default function DigestsPage() {
                   value={customName}
                   onChange={(e) => setCustomName(e.target.value)}
                   placeholder="e.g., Today's Ideas Summary"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 border border-border/60 rounded-lg bg-surface text-textPrimary placeholder-textMuted focus:outline-none focus:ring-2 focus:ring-primary/50"
                 />
               </div>
 
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-textPrimary mb-2">
                   Prompt *
                 </label>
                 <textarea
@@ -476,7 +479,7 @@ export default function DigestsPage() {
                   onChange={(e) => setCustomPrompt(e.target.value)}
                   placeholder="Summarise all the ideas I came up with today"
                   rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 border border-border/60 rounded-lg bg-surface text-textPrimary placeholder-textMuted focus:outline-none focus:ring-2 focus:ring-primary/50"
                 />
               </div>
 
@@ -489,17 +492,17 @@ export default function DigestsPage() {
                     setCustomName('')
                     setTriggerError(null)
                   }}
-                  className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600"
+                  className="px-4 py-2 rounded-lg border border-border/60 bg-surface text-textPrimary hover:bg-surfaceElevated transition-all font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleCreateCustomDigest}
                   disabled={(creatingCustom || updatingCustom) || !customPrompt.trim() || !customName.trim()}
-                  className={`px-4 py-2 rounded ${
+                  className={`px-4 py-2 rounded-lg font-medium transition-all ${
                     (creatingCustom || updatingCustom) || !customPrompt.trim() || !customName.trim()
-                      ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                      ? 'bg-surfaceElevated text-textMuted cursor-not-allowed opacity-50'
+                      : 'bg-primary text-textPrimary hover:bg-primary/90 shadow-lg shadow-primary/20'
                   }`}
                 >
                   {updatingCustom ? 'Updating...' : creatingCustom ? 'Creating...' : editingTemplate ? 'Update Template' : 'Create Template'}

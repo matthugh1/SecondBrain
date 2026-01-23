@@ -51,6 +51,28 @@ export async function getPersonByName(tenantId: string, name: string): Promise<P
   }
 }
 
+export async function getPersonByEmail(tenantId: string, email: string): Promise<Person | null> {
+  // Search by email in context or name
+  const result = await prisma.person.findFirst({
+    where: {
+      tenantId,
+      OR: [
+        { context: { contains: email } },
+        { name: { contains: email } },
+      ],
+    },
+  })
+  if (!result) return null
+  return {
+    id: result.id,
+    name: result.name,
+    context: result.context || undefined,
+    follow_ups: result.followUps || undefined,
+    last_touched: result.lastTouched || undefined,
+    tags: result.tags || undefined,
+  }
+}
+
 export async function getAllPeople(tenantId: string, includeArchived: boolean = false): Promise<Person[]> {
   const results = await prisma.person.findMany({
     where: {

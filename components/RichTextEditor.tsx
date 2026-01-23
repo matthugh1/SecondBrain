@@ -65,16 +65,16 @@ export default function RichTextEditor({
   }
 
   return (
-    <div className={`border border-gray-300 dark:border-gray-600 rounded-lg ${className}`}>
+    <div className={`border border-border/60 rounded-xl bg-surfaceElevated ${className}`}>
       {/* Toolbar */}
-      <div className="flex items-center justify-between p-2 border-b border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+      <div className="flex items-center justify-between p-2 border-b border-border/60 bg-surface">
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsPreview(!isPreview)}
-            className={`px-3 py-1 text-sm rounded ${
+            className={`px-3 py-1 text-sm rounded-lg font-medium transition-all ${
               isPreview
-                ? 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                : 'bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                ? 'bg-primary text-textPrimary shadow-lg shadow-primary/20'
+                : 'bg-surfaceElevated text-textMuted hover:bg-surface border border-border/60'
             }`}
           >
             {isPreview ? 'Edit' : 'Preview'}
@@ -96,7 +96,7 @@ export default function RichTextEditor({
                     }, 0)
                   }
                 }}
-                className="px-2 py-1 text-sm bg-white dark:bg-gray-900 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                className="px-2 py-1 text-sm bg-surfaceElevated text-textPrimary rounded-lg hover:bg-surface border border-border/60 transition-all"
                 title="Bold"
               >
                 <strong>B</strong>
@@ -116,7 +116,7 @@ export default function RichTextEditor({
                     }, 0)
                   }
                 }}
-                className="px-2 py-1 text-sm bg-white dark:bg-gray-900 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                className="px-2 py-1 text-sm bg-surfaceElevated text-textPrimary rounded-lg hover:bg-surface border border-border/60 transition-all"
                 title="Italic"
               >
                 <em>I</em>
@@ -134,7 +134,7 @@ export default function RichTextEditor({
                     }, 0)
                   }
                 }}
-                className="px-2 py-1 text-sm bg-white dark:bg-gray-900 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                className="px-2 py-1 text-sm bg-surfaceElevated text-textPrimary rounded-lg hover:bg-surface border border-border/60 transition-all"
                 title="List"
               >
                 •
@@ -146,7 +146,7 @@ export default function RichTextEditor({
           <button
             onClick={handleSave}
             disabled={isSaving}
-            className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+            className="px-3 py-1 text-sm bg-primary text-textPrimary rounded-lg hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all disabled:opacity-50 font-medium"
           >
             {isSaving ? 'Saving...' : 'Save'}
           </button>
@@ -156,7 +156,7 @@ export default function RichTextEditor({
       {/* Editor/Preview */}
       {isPreview ? (
         <div
-          className="p-4 min-h-[200px] prose dark:prose-invert max-w-none"
+          className="p-4 min-h-[200px] prose prose-invert max-w-none text-textPrimary"
           dangerouslySetInnerHTML={{ __html: renderMarkdown(value || '') }}
         />
       ) : (
@@ -164,7 +164,7 @@ export default function RichTextEditor({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="w-full p-4 min-h-[200px] border-0 focus:outline-none dark:bg-gray-900 dark:text-white resize-y"
+          className="w-full p-4 min-h-[200px] border-0 focus:outline-none bg-surfaceElevated text-textPrimary placeholder-textMuted resize-y"
         />
       )}
     </div>

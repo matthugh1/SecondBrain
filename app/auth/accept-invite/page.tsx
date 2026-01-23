@@ -70,15 +70,15 @@ function AcceptInviteContent() {
 
   if (!token) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full bg-white rounded-lg shadow p-8">
-          <h2 className="text-2xl font-bold mb-4">Invalid Invite</h2>
-          <p className="text-gray-600 mb-4">
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <div className="max-w-md w-full bg-surface border border-border/60 rounded-2xl shadow-2xl p-8 backdrop-blur-sm">
+          <h2 className="text-2xl font-black text-textPrimary tracking-tight mb-4">Invalid Invite</h2>
+          <p className="text-textMuted font-medium mb-6">
             This invite link is invalid or missing a token.
           </p>
           <Link
             href="/auth/signin"
-            className="text-indigo-600 hover:text-indigo-500"
+            className="inline-block text-xs font-bold text-secondary uppercase tracking-widest hover:text-secondary/80 transition-colors"
           >
             Go to Sign In
           </Link>
@@ -89,13 +89,13 @@ function AcceptInviteContent() {
 
   if (error && !inviteInfo) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full bg-white rounded-lg shadow p-8">
-          <h2 className="text-2xl font-bold mb-4">Invalid Invite</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <div className="max-w-md w-full bg-surface border border-border/60 rounded-2xl shadow-2xl p-8 backdrop-blur-sm">
+          <h2 className="text-2xl font-black text-textPrimary tracking-tight mb-4">Invalid Invite</h2>
+          <p className="text-textMuted font-medium mb-6">{error}</p>
           <Link
             href="/auth/signin"
-            className="text-indigo-600 hover:text-indigo-500"
+            className="inline-block text-xs font-bold text-secondary uppercase tracking-widest hover:text-secondary/80 transition-colors"
           >
             Go to Sign In
           </Link>
@@ -106,21 +106,23 @@ function AcceptInviteContent() {
 
   if (!session) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full bg-white rounded-lg shadow p-8">
-          <h2 className="text-2xl font-bold mb-4">Sign In Required</h2>
-          <p className="text-gray-600 mb-4">
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <div className="max-w-md w-full bg-surface border border-border/60 rounded-2xl shadow-2xl p-8 backdrop-blur-sm">
+          <h2 className="text-2xl font-black text-textPrimary tracking-tight mb-4">Sign In Required</h2>
+          <p className="text-textMuted font-medium mb-6">
             You need to sign in to accept this invite.
           </p>
           {inviteInfo && (
-            <p className="text-sm text-gray-500 mb-4">
-              You've been invited to join <strong>{inviteInfo.tenantName}</strong>{' '}
-              as a <strong>{inviteInfo.role}</strong>.
-            </p>
+            <div className="bg-surfaceElevated border border-border/60 rounded-xl p-4 mb-6">
+              <p className="text-sm text-textMuted">
+                You've been invited to join <span className="text-textPrimary font-bold">{inviteInfo.tenantName}</span>{' '}
+                as <span className="text-secondary font-bold uppercase tracking-wider">{inviteInfo.role}</span>.
+              </p>
+            </div>
           )}
           <button
             onClick={() => signIn()}
-            className="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+            className="w-full py-3 px-4 bg-primary text-textPrimary font-bold rounded-xl hover:bg-primary/90 transition-all duration-300 shadow-lg shadow-primary/20"
           >
             Sign In
           </button>
@@ -131,19 +133,19 @@ function AcceptInviteContent() {
 
   if (inviteInfo && inviteInfo.email !== session.user?.email) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full bg-white rounded-lg shadow p-8">
-          <h2 className="text-2xl font-bold mb-4">Email Mismatch</h2>
-          <p className="text-gray-600 mb-4">
-            This invite was sent to <strong>{inviteInfo.email}</strong>, but
-            you're signed in as <strong>{session.user?.email}</strong>.
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <div className="max-w-md w-full bg-surface border border-border/60 rounded-2xl shadow-2xl p-8 backdrop-blur-sm">
+          <h2 className="text-2xl font-black text-textPrimary tracking-tight mb-4 text-error">Email Mismatch</h2>
+          <p className="text-textMuted font-medium mb-4">
+            This invite was sent to <span className="text-textPrimary font-bold">{inviteInfo.email}</span>, but
+            you're signed in as <span className="text-textPrimary font-bold">{session.user?.email}</span>.
           </p>
-          <p className="text-sm text-gray-500 mb-4">
+          <p className="text-sm text-textMuted italic mb-6">
             Please sign in with the email address the invite was sent to.
           </p>
           <button
             onClick={() => signIn()}
-            className="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+            className="w-full py-3 px-4 bg-surfaceElevated border border-border/60 text-textPrimary font-bold rounded-xl hover:bg-surfaceElevated/80 transition-all"
           >
             Sign In with Different Account
           </button>
@@ -153,29 +155,32 @@ function AcceptInviteContent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full bg-white rounded-lg shadow p-8">
-        <h2 className="text-2xl font-bold mb-4">Accept Invite</h2>
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="max-w-md w-full bg-surface border border-border rounded-2xl shadow-2xl p-8 backdrop-blur-sm">
+        <h2 className="text-3xl font-black text-textPrimary tracking-tight mb-6">Accept Invite</h2>
         {inviteInfo && (
-          <div className="mb-6">
-            <p className="text-gray-600 mb-2">
+          <div className="mb-8">
+            <p className="text-xs font-bold text-textMuted uppercase tracking-widest mb-2">
               You've been invited to join:
             </p>
-            <p className="text-lg font-semibold">{inviteInfo.tenantName}</p>
-            <p className="text-sm text-gray-500 mt-2">
-              Role: <span className="capitalize">{inviteInfo.role}</span>
-            </p>
+            <p className="text-2xl font-bold text-primary">{inviteInfo.tenantName}</p>
+            <div className="mt-4 flex items-center gap-2">
+              <span className="text-xs font-bold text-textMuted uppercase tracking-widest">Role:</span>
+              <span className="px-2 py-0.5 bg-secondary/20 text-secondary border border-secondary/30 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                {inviteInfo.role}
+              </span>
+            </div>
           </div>
         )}
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+          <div className="mb-6 bg-error/10 border border-error/20 text-error px-4 py-3 rounded-xl text-sm font-medium">
             {error}
           </div>
         )}
         <button
           onClick={handleAccept}
           disabled={loading}
-          className="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
+          className="w-full py-3 px-4 bg-primary text-textPrimary font-bold rounded-xl hover:bg-primary/90 transition-all duration-300 shadow-lg shadow-primary/20 disabled:opacity-50"
         >
           {loading ? 'Accepting...' : 'Accept Invite'}
         </button>
@@ -187,8 +192,8 @@ function AcceptInviteContent() {
 export default function AcceptInvitePage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center text-textMuted">Loading...</div>
       </div>
     }>
       <AcceptInviteContent />

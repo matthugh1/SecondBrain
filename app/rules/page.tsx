@@ -12,8 +12,8 @@ export default function RulesPage() {
   }, [router])
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-      <div className="text-center">Redirecting to Settings...</div>
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="text-center text-textMuted">Redirecting to Settings...</div>
     </div>
   )
 }

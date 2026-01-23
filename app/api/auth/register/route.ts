@@ -74,9 +74,6 @@ export async function POST(request: NextRequest) {
       })
 
       // Initialize default rule settings
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/03cc86a7-5004-44c5-8434-e4ab8f6d3441',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'register/route.ts:before-ruleSettings-create',message:'About to create ruleSettings',data:{tenantId:tenant.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
       await tx.ruleSettings.create({
         data: {
           tenantId: tenant.id,
@@ -89,7 +86,7 @@ export async function POST(request: NextRequest) {
         },
       })
       // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/03cc86a7-5004-44c5-8434-e4ab8f6d3441',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'register/route.ts:after-ruleSettings-create',message:'Successfully created ruleSettings',data:{tenantId:tenant.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'B'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7243/ingest/03cc86a7-5004-44c5-8434-e4ab8f6d3441', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'register/route.ts:after-ruleSettings-create', message: 'Successfully created ruleSettings', data: { tenantId: tenant.id }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run3', hypothesisId: 'B' }) }).catch(() => { });
       // #endregion
 
       // Initialize default categories

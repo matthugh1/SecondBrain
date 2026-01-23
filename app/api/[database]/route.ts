@@ -57,11 +57,16 @@ export async function GET(
 
     // Apply filters
     const status = searchParams.get('status')
+    const priority = searchParams.get('priority')
     const dateFrom = searchParams.get('dateFrom')
     const dateTo = searchParams.get('dateTo')
 
     if (status) {
       data = data.filter(item => item.status === status)
+    }
+
+    if (priority) {
+      data = data.filter(item => item.priority === priority)
     }
 
     if (dateFrom || dateTo) {

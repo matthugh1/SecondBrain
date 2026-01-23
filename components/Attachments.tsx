@@ -27,7 +27,9 @@ export default function Attachments({ itemType, itemId }: AttachmentsProps) {
   }
 
   useEffect(() => {
-    fetchAttachments()
+    if (itemId) {
+      fetchAttachments()
+    }
   }, [itemType, itemId])
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -96,7 +98,7 @@ export default function Attachments({ itemType, itemId }: AttachmentsProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Attachments</h3>
+        <h3 className="text-lg font-bold text-textPrimary">Attachments</h3>
         <div>
           <input
             ref={fileInputRef}
@@ -108,7 +110,7 @@ export default function Attachments({ itemType, itemId }: AttachmentsProps) {
           />
           <label
             htmlFor="file-upload"
-            className={`px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer inline-block ${
+            className={`px-4 py-2 bg-primary text-textPrimary rounded-lg hover:bg-primary/90 shadow-lg shadow-primary/20 cursor-pointer inline-block transition-all font-medium ${
               uploading ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >
@@ -118,39 +120,39 @@ export default function Attachments({ itemType, itemId }: AttachmentsProps) {
       </div>
 
       {error && (
-        <div className="p-3 bg-red-50 dark:bg-red-900 text-red-700 dark:text-red-200 rounded">
+        <div className="p-3 bg-error/10 border border-error/30 text-error rounded-lg">
           {error}
         </div>
       )}
 
       {attachments.length === 0 ? (
-        <p className="text-sm text-gray-500 dark:text-gray-400">No attachments</p>
+        <p className="text-sm text-textMuted">No attachments</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {attachments.map((attachment) => (
             <div
               key={attachment.id}
-              className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
+              className="border border-border/60 rounded-lg p-4 bg-surfaceElevated hover:bg-surface transition-all"
             >
               {isImage(attachment.mime_type) && attachment.id ? (
                 <div className="mb-2">
                   <img
                     src={`/api/attachments/${attachment.id}`}
                     alt={attachment.filename}
-                    className="w-full h-32 object-cover rounded"
+                    className="w-full h-32 object-cover rounded-lg"
                   />
                 </div>
               ) : (
-                <div className="mb-2 h-32 bg-gray-100 dark:bg-gray-800 rounded flex items-center justify-center">
+                <div className="mb-2 h-32 bg-surface rounded-lg flex items-center justify-center">
                   <span className="text-4xl">📎</span>
                 </div>
               )}
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate" title={attachment.filename}>
+                  <p className="text-sm font-medium text-textPrimary truncate" title={attachment.filename}>
                     {attachment.filename}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-xs text-textMuted">
                     {formatFileSize(attachment.size)}
                   </p>
                 </div>
@@ -158,13 +160,13 @@ export default function Attachments({ itemType, itemId }: AttachmentsProps) {
                   <a
                     href={`/api/attachments/${attachment.id}`}
                     download={attachment.filename}
-                    className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
+                    className="px-2 py-1 text-xs bg-surface text-textMuted rounded-lg hover:bg-surfaceElevated border border-border/60 transition-all font-medium"
                   >
                     Download
                   </a>
                   <button
                     onClick={() => attachment.id && handleDelete(attachment.id)}
-                    className="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700"
+                    className="px-2 py-1 text-xs bg-error text-textPrimary rounded-lg hover:bg-error/90 shadow-lg shadow-error/20 transition-all font-medium"
                   >
                     Delete
                   </button>

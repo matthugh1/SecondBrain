@@ -5,6 +5,7 @@ import { createClassificationAudit } from '@/lib/db/repositories/classification-
 import { getActiveRulePrompt, getEnabledRuleCategories, getRuleSettings } from '@/lib/db/repositories/rules'
 import { getRecentCorrections } from '@/lib/db/repositories/classification-learning'
 import { createTokenUsage } from '@/lib/db/repositories/token-usage'
+import { getCurrentMeetingContext } from './calendar-context'
 
 const aiProvider = process.env.AI_PROVIDER || 'openai'
 
@@ -69,6 +70,14 @@ async function getClassificationPrompt(tenantId: string, messageText: string): P
   // Get learning examples
   const learningExamples = await getLearningExamples(tenantId, settings)
 
+  // Get calendar context (current meeting)
+  let calendarContext: string | null = null
+  try {
+    calendarContext = await getCurrentMeetingContext(tenantId)
+  } catch (error) {
+    console.warn('Failed to get calendar context:', error)
+  }
+
   // Get current date for relative date calculations
   const now = new Date()
   const currentDate = now.toISOString().split('T')[0] // YYYY-MM-DD
@@ -82,12 +91,12 @@ async function getClassificationPrompt(tenantId: string, messageText: string): P
   if (!prompt) {
     console.log('📝 Using CLASSIFICATION PROMPT from CODE (fallback)')
     // Fallback to default if no prompt found
+    const calendarContextStr = calendarContext ? `\n\nCALENDAR CONTEXT:\n${calendarContext}\n` : ''
     return `You are a classification system for a personal knowledge management system. Your job is to analyze the user's captured thought and return structured JSON.${learningExamples}
 
 CURRENT DATE CONTEXT:
 Today is ${currentDateReadable} (${currentDate}).
-Use this date to calculate relative dates like "tomorrow", "next Friday", "in 3 days", etc.
-
+Use this date to calculate relative dates like "tomorrow", "next Friday", "in 3 days", etc.${calendarContextStr}
 INPUT:
 ${messageText}
 
@@ -150,6 +159,18 @@ RULES:
       finalPrompt = finalPrompt.replace('INPUT:', dateContext + 'INPUT:')
     } else {
       finalPrompt = dateContext + finalPrompt
+    }
+  }
+
+  // Add calendar context if available
+  if (calendarContext) {
+    const calendarContextStr = `\n\nCALENDAR CONTEXT:\n${calendarContext}\n`
+    // Insert before INPUT section if it exists
+    if (finalPrompt.includes('INPUT:')) {
+      finalPrompt = finalPrompt.replace('INPUT:', calendarContextStr + 'INPUT:')
+    } else {
+      // Otherwise append before the message text
+      finalPrompt = finalPrompt + calendarContextStr
     }
   }
   

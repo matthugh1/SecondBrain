@@ -39,7 +39,7 @@ export default function TenantSwitcher() {
 
   const handleSwitch = async (tenantId: string) => {
     if (tenantId === session?.activeTenantId) return
-    
+
     setSwitching(true)
     try {
       const response = await fetch('/api/tenants/switch', {
@@ -74,11 +74,17 @@ export default function TenantSwitcher() {
         value={session.activeTenantId}
         onChange={(e) => handleSwitch(e.target.value)}
         disabled={switching}
-        className="px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+        className="pl-3 pr-10 py-2 text-sm border border-border/60 rounded-xl bg-surfaceElevated text-textPrimary focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50 appearance-none cursor-pointer transition-all hover:bg-surface font-bold uppercase tracking-widest"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23A8B3CF'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: 'right 0.75rem center',
+          backgroundSize: '1rem'
+        }}
       >
         {tenants.map((tenant) => (
-          <option key={tenant.id} value={tenant.id}>
-            {tenant.name} {tenant.role === 'owner' && '(Owner)'}
+          <option key={tenant.id} value={tenant.id} className="bg-surfaceElevated">
+            {tenant.name} {tenant.role === 'owner' && '★'}
           </option>
         ))}
       </select>

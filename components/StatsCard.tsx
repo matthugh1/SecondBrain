@@ -6,15 +6,15 @@ interface StatsCardProps {
 
 export default function StatsCard({ title, value, subtitle }: StatsCardProps) {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-      <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400">
+    <div className="bg-surfaceElevated border border-border/60 rounded-xl shadow-lg p-5 transition-all duration-300 hover:bg-surface hover:-translate-y-1 hover:shadow-primary/20 group">
+      <h3 className="text-xs font-bold text-textMuted uppercase tracking-widest transition-colors group-hover:text-primary">
         {title}
       </h3>
-      <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+      <p className="text-3xl font-black text-textPrimary mt-2 tracking-tight">
         {value}
       </p>
       {subtitle && (
-        <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">
+        <p className="text-xs text-textMuted mt-1 font-medium">
           {subtitle}
         </p>
       )}

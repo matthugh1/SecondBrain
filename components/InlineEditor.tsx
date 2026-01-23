@@ -143,7 +143,7 @@ export default function InlineEditor({
         onBlur={handleSave}
         onKeyDown={handleKeyDown}
         disabled={isSaving}
-        className={`px-2 py-1 border border-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white ${className}`}
+        className={`px-4 py-2.5 bg-surface border border-border/60 rounded-xl text-textPrimary focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all ${className}`}
         autoFocus
       >
         {options.map((option) => (
@@ -166,11 +166,11 @@ export default function InlineEditor({
           onKeyDown={handleKeyDown}
           disabled={isSaving}
           rows={3}
-          className={`w-full px-2 py-1 border border-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white ${className}`}
+          className={`w-full px-4 py-2.5 bg-surface border border-border/60 rounded-xl text-textPrimary placeholder-textMuted focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all resize-y ${className}`}
           autoFocus
         />
         {isSaving && (
-          <div className="absolute top-2 right-2 text-xs text-gray-500">Saving...</div>
+          <div className="absolute top-2 right-2 text-xs text-textMuted">Saving...</div>
         )}
       </div>
     )
@@ -187,7 +187,7 @@ export default function InlineEditor({
         onBlur={handleSave}
         onKeyDown={handleKeyDown}
         disabled={isSaving}
-        className={`px-2 py-1 border border-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white ${className}`}
+        className={`px-4 py-2.5 bg-surface border border-border/60 rounded-xl text-textPrimary focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all ${className}`}
         autoFocus
       />
     )

@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     return tenantCheck
   }
   
-  const { tenantId } = tenantCheck
+  const { tenantId, userId } = tenantCheck
 
   try {
     const body = await request.json()
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const result = await fixClassification(tenantId, logId, category as Category)
+    const result = await fixClassification(tenantId, logId, category as Category, userId)
     return NextResponse.json(result)
   } catch (error) {
     console.error('Error in fix API:', error)

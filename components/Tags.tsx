@@ -21,12 +21,19 @@ export default function Tags({ itemType, itemId, onTagsChange }: TagsProps) {
   const [showAdd, setShowAdd] = useState(false)
   const [loading, setLoading] = useState(false)
 
+  if (!itemId) {
+    return null
+  }
+
   useEffect(() => {
-    fetchTags()
-    fetchAvailableTags()
+    if (itemId) {
+      fetchTags()
+      fetchAvailableTags()
+    }
   }, [itemType, itemId])
 
   const fetchTags = () => {
+    if (!itemId) return
     fetch(`/api/tags/${itemType}/${itemId}`)
       .then((res) => res.json())
       .then((data) => {
@@ -109,13 +116,13 @@ export default function Tags({ itemType, itemId, onTagsChange }: TagsProps) {
         {tags.map((tag) => (
           <span
             key={tag.id}
-            className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm"
+            className="inline-flex items-center gap-1 px-3 py-1 bg-primary/20 text-primary border border-primary/30 rounded-full text-sm font-medium"
           >
             {tag.name}
             <button
               onClick={() => removeTag(tag.id)}
               disabled={loading}
-              className="hover:text-blue-600 dark:hover:text-blue-300"
+              className="hover:text-primary/80 transition-colors"
             >
               ×
             </button>
@@ -124,7 +131,7 @@ export default function Tags({ itemType, itemId, onTagsChange }: TagsProps) {
         {!showAdd ? (
           <button
             onClick={() => setShowAdd(true)}
-            className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
+            className="px-3 py-1 text-sm border border-border/60 rounded-full text-textMuted hover:bg-surfaceElevated transition-all"
           >
             + Add Tag
           </button>
@@ -143,13 +150,13 @@ export default function Tags({ itemType, itemId, onTagsChange }: TagsProps) {
                 }
               }}
               placeholder="Tag name..."
-              className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-full bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+              className="px-3 py-1 text-sm border border-border/60 rounded-full bg-surface text-textPrimary placeholder-textMuted focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
               autoFocus
             />
             <button
               onClick={() => addTag(newTagName)}
               disabled={loading}
-              className="px-3 py-1 text-sm bg-blue-500 text-white rounded-full hover:bg-blue-600"
+              className="px-3 py-1 text-sm bg-primary text-textPrimary rounded-full hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all font-medium"
             >
               Add
             </button>
@@ -158,7 +165,7 @@ export default function Tags({ itemType, itemId, onTagsChange }: TagsProps) {
                 setShowAdd(false)
                 setNewTagName('')
               }}
-              className="px-3 py-1 text-sm text-gray-600 dark:text-gray-400 hover:underline"
+              className="px-3 py-1 text-sm text-textMuted hover:text-textPrimary transition-colors"
             >
               Cancel
             </button>
@@ -166,14 +173,14 @@ export default function Tags({ itemType, itemId, onTagsChange }: TagsProps) {
         )}
       </div>
       {showAdd && filteredAvailableTags.length > 0 && (
-        <div className="mt-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
-          <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Or select existing:</div>
+        <div className="mt-2 p-2 bg-surfaceElevated border border-border/60 rounded-lg">
+          <div className="text-xs text-textMuted mb-1">Or select existing:</div>
           <div className="flex flex-wrap gap-1">
             {filteredAvailableTags.slice(0, 10).map((tag) => (
               <button
                 key={tag.id}
                 onClick={() => addTag(tag.name)}
-                className="px-2 py-0.5 text-xs border border-gray-300 dark:border-gray-600 rounded text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="px-2 py-0.5 text-xs border border-border/60 rounded text-textMuted hover:bg-surface hover:text-textPrimary transition-all"
               >
                 {tag.name}
               </button>

@@ -4,7 +4,12 @@ import * as projectsRepo from '@/lib/db/repositories/projects'
 import * as ideasRepo from '@/lib/db/repositories/ideas'
 import * as adminRepo from '@/lib/db/repositories/admin'
 import * as inboxLogRepo from '@/lib/db/repositories/inbox-log'
+import * as calendarRepo from '@/lib/db/repositories/calendar'
 import { getRuleSettings } from '@/lib/db/repositories/rules'
+import { formatMeetingContextForItem } from './calendar-context'
+import { generateAndStoreEmbedding } from './semantic-search'
+import { detectRelationshipsForItem } from './relationship-engine'
+import * as userAnalyticsRepo from '@/lib/db/repositories/user-analytics'
 import type { Category, Person, Project, Idea, Admin } from '@/types'
 
 export interface CaptureResult {
@@ -27,11 +32,28 @@ function getDestinationUrl(database: Category, id: number): string {
 export async function createRecord(
   tenantId: string,
   category: Category,
-  fields: Record<string, any>
+  fields: Record<string, any>,
+  meetingContext?: string
 ): Promise<{ id: number; name: string; url: string }> {
   // Ensure fields is an object
   if (!fields || typeof fields !== 'object') {
     fields = {}
+  }
+  
+  // Helper function to append meeting context to a field, avoiding duplicates
+  const appendMeetingContext = (existingValue: string | undefined, context: string): string => {
+    if (!context) return existingValue || ''
+    
+    // Check if context already contains this meeting info to avoid duplicates
+    if (existingValue && existingValue.includes(context)) {
+      return existingValue
+    }
+    
+    // Append with separator
+    if (existingValue && existingValue.trim()) {
+      return `${existingValue}\n\n${context}`
+    }
+    return context
   }
   
   let id: number
@@ -44,42 +66,67 @@ export async function createRecord(
         ? fields.name.trim().slice(0, 500) // Limit length to prevent issues
         : 'Unknown'
       
+      // Append meeting context to context field if provided
+      let contextValue = fields.context && typeof fields.context === 'string' ? fields.context : undefined
+      if (meetingContext) {
+        contextValue = appendMeetingContext(contextValue, meetingContext)
+      }
+      
       // Ensure optional fields are strings or undefined (not other types)
       const person: Person = {
         name: personName,
-        context: fields.context && typeof fields.context === 'string' ? fields.context : undefined,
+        context: contextValue,
         follow_ups: fields.follow_ups && typeof fields.follow_ups === 'string' ? fields.follow_ups : undefined,
         last_touched: new Date().toISOString().split('T')[0],
         tags: fields.tags && typeof fields.tags === 'string' ? fields.tags : undefined,
       }
       id = await peopleRepo.createPerson(tenantId, person)
       name = person.name
+      // Generate embedding asynchronously (don't block on this)
+      generateAndStoreEmbedding(tenantId, 'people', id, person.name, [person.context, person.follow_ups].filter(Boolean).join(' ')).catch(err => console.error('Error generating embedding:', err))
       break
     }
 
     case 'projects': {
       const settings = await getRuleSettings(tenantId)
+      
+      // Append meeting context to notes field if provided
+      let notesValue = fields.notes && typeof fields.notes === 'string' ? fields.notes : undefined
+      if (meetingContext) {
+        notesValue = appendMeetingContext(notesValue, meetingContext)
+      }
+      
       const project: Project = {
         name: fields.name || 'Untitled Project',
         status: fields.status || settings?.default_project_status || 'Active',
         next_action: fields.next_action,
-        notes: fields.notes,
+        notes: notesValue,
       }
       id = await projectsRepo.createProject(tenantId, project)
       name = project.name
+      // Generate embedding asynchronously (don't block on this)
+      generateAndStoreEmbedding(tenantId, 'projects', id, project.name, [project.status, project.next_action, project.notes].filter(Boolean).join(' ')).catch(err => console.error('Error generating embedding:', err))
       break
     }
 
     case 'ideas': {
+      // Append meeting context to notes field if provided
+      let notesValue = fields.notes && typeof fields.notes === 'string' ? fields.notes : undefined
+      if (meetingContext) {
+        notesValue = appendMeetingContext(notesValue, meetingContext)
+      }
+      
       const idea: Idea = {
         name: fields.name || 'Untitled Idea',
         one_liner: fields.one_liner,
-        notes: fields.notes,
+        notes: notesValue,
         last_touched: new Date().toISOString().split('T')[0],
         tags: fields.tags,
       }
       id = await ideasRepo.createIdea(tenantId, idea)
       name = idea.name
+      // Generate embedding asynchronously (don't block on this)
+      generateAndStoreEmbedding(tenantId, 'ideas', id, idea.name, [idea.one_liner, idea.notes].filter(Boolean).join(' ')).catch(err => console.error('Error generating embedding:', err))
       break
     }
 
@@ -121,15 +168,23 @@ export async function createRecord(
         }
       }
       
+      // Append meeting context to notes field if provided
+      let notesValue = fields.notes && typeof fields.notes === 'string' ? fields.notes : undefined
+      if (meetingContext) {
+        notesValue = appendMeetingContext(notesValue, meetingContext)
+      }
+      
       const admin: Admin = {
         name: fields.name || 'Untitled Task',
         due_date: dueDate,
         status: fields.status || settings?.default_admin_status || 'Todo',
-        notes: fields.notes,
+        notes: notesValue,
         created: new Date().toISOString(),
       }
       id = await adminRepo.createAdmin(tenantId, admin)
       name = admin.name
+      // Generate embedding asynchronously (don't block on this)
+      generateAndStoreEmbedding(tenantId, 'admin', id, admin.name, [admin.status, admin.notes].filter(Boolean).join(' ')).catch(err => console.error('Error generating embedding:', err))
       break
     }
 
@@ -138,12 +193,20 @@ export async function createRecord(
   }
 
   const url = getDestinationUrl(category, id)
+  
+  // Detect relationships asynchronously (don't block on this)
+  const itemText = `${name} ${JSON.stringify(fields)}`.trim()
+  detectRelationshipsForItem(tenantId, category, id, itemText).catch(err => 
+    console.error('Error detecting relationships:', err)
+  )
+  
   return { id, name, url }
 }
 
 export async function captureMessage(
   tenantId: string,
-  messageText: string
+  messageText: string,
+  userId?: string
 ): Promise<CaptureResult> {
   try {
     // Get confidence threshold from database
@@ -219,8 +282,20 @@ export async function captureMessage(
     let recordId: string | undefined
 
     if (shouldFile) {
+      // Check if user is currently in a meeting
+      let meetingContext: string | undefined
+      try {
+        const currentMeeting = await calendarRepo.getCurrentMeeting(tenantId)
+        if (currentMeeting) {
+          meetingContext = formatMeetingContextForItem(currentMeeting)
+        }
+      } catch (error) {
+        console.warn('Failed to get current meeting for context:', error)
+        // Continue without meeting context if there's an error
+      }
+      
       // Create the record in the appropriate database
-      const result = await createRecord(tenantId, classification.category, classification.fields)
+      const result = await createRecord(tenantId, classification.category, classification.fields, meetingContext)
       destinationName = result.name
       destinationUrl = result.url
       recordId = result.id.toString()
@@ -248,6 +323,22 @@ export async function captureMessage(
         destination_url: destinationUrl,
         destination_name: destinationName,
       })
+    }
+
+    // Track analytics if userId is provided
+    if (userId && shouldFile) {
+      const now = new Date()
+      const hourOfDay = now.getHours()
+      const dayOfWeek = now.toLocaleDateString('en-US', { weekday: 'long' })
+      
+      userAnalyticsRepo.recordCapture(
+        tenantId,
+        userId,
+        classification.category,
+        classification.confidence,
+        hourOfDay,
+        dayOfWeek
+      ).catch(err => console.error('Error recording analytics:', err))
     }
 
     // Build response message

@@ -6,12 +6,29 @@ import { useChat } from '@/contexts/ChatContext'
 import { useDataUpdate } from '@/contexts/DataUpdateContext'
 import type { Message } from '@/contexts/ChatContext'
 import type { CaptureResult } from '@/lib/services/capture'
+import QueryResults from '@/components/QueryResults'
+import CapturePredictions from '@/components/CapturePredictions'
+import SmartAutocomplete from '@/components/SmartAutocomplete'
+import { VoiceCaptureService, parseVoiceCommand } from '@/lib/services/voice-capture'
+
+interface CurrentMeeting {
+  id: number
+  subject: string
+  startTime: string
+  endTime: string
+  location?: string | null
+  attendees?: string | null
+}
 
 export default function ChatInterface() {
   const { messages, setMessages } = useChat()
   const { notifyUpdate } = useDataUpdate()
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [currentMeeting, setCurrentMeeting] = useState<CurrentMeeting | null>(null)
+  const [isListening, setIsListening] = useState(false)
+  const [isVoiceSupported, setIsVoiceSupported] = useState(false)
+  const voiceServiceRef = useRef<any>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -22,19 +39,119 @@ export default function ChatInterface() {
     scrollToBottom()
   }, [messages])
 
+  // Initialize voice capture service
+  useEffect(() => {
+    try {
+      const service = new VoiceCaptureService()
+      setIsVoiceSupported(service.isSpeechRecognitionSupported())
+      voiceServiceRef.current = service
+    } catch (error) {
+      console.error('Voice capture not available:', error)
+      setIsVoiceSupported(false)
+    }
+  }, [])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!input.trim() || isLoading) return
+  const startVoiceInput = () => {
+    if (!voiceServiceRef.current || !isVoiceSupported) return
 
-    const inputText = input.trim()
-    const lowerInput = inputText.toLowerCase()
+    setIsListening(true)
+    setInput('') // Clear input when starting voice
     
+    const transcriptRef = { current: '' }
+    const hasSubmittedRef = { current: false } // Track if we've already submitted
+    
+    voiceServiceRef.current.startCapture(
+      (result: any) => {
+        setInput(result.transcript)
+        transcriptRef.current = result.transcript
+        if (result.isFinal && result.transcript.trim() && !hasSubmittedRef.current) {
+          setIsListening(false)
+          const finalText = result.transcript.trim()
+          hasSubmittedRef.current = true // Mark as submitted
+          
+          // Set input and submit automatically
+          setInput(finalText)
+          
+          // Submit after state update
+          setTimeout(() => {
+            const syntheticEvent = {
+              preventDefault: () => {},
+              stopPropagation: () => {},
+            } as React.FormEvent<HTMLFormElement>
+            
+            // Submit with the final text directly
+            handleSubmit(syntheticEvent, finalText).catch((err) => {
+              console.error('Error submitting voice input:', err)
+            })
+          }, 200)
+        }
+      },
+      (error: any) => {
+        console.error('Voice recognition error:', error)
+        setIsListening(false)
+      },
+      () => {
+        // When recording ends, submit if we have text and haven't already submitted
+        setIsListening(false)
+        const textToSubmit = transcriptRef.current.trim()
+        if (textToSubmit && !isLoading && !hasSubmittedRef.current) {
+          hasSubmittedRef.current = true // Mark as submitted
+          setInput(textToSubmit)
+          setTimeout(() => {
+            const syntheticEvent = {
+              preventDefault: () => {},
+              stopPropagation: () => {},
+            } as React.FormEvent<HTMLFormElement>
+            handleSubmit(syntheticEvent, textToSubmit).catch(console.error)
+          }, 100)
+        }
+      }
+    )
+  }
+
+  const stopVoiceInput = () => {
+    if (voiceServiceRef.current) {
+      voiceServiceRef.current.stopCapture()
+      setIsListening(false)
+    }
+  }
+
+  // Fetch current meeting status
+  useEffect(() => {
+    const fetchCurrentMeeting = async () => {
+      try {
+        const response = await fetch('/api/calendar/current', {
+          credentials: 'include',
+        })
+        if (response.ok) {
+          const data = await response.json()
+          setCurrentMeeting(data.event)
+        }
+      } catch (error) {
+        console.error('Failed to fetch current meeting:', error)
+      }
+    }
+
+    fetchCurrentMeeting()
+    // Refresh every minute to check for new meetings
+    const interval = setInterval(fetchCurrentMeeting, 60000)
+    return () => clearInterval(interval)
+  }, [])
+
+
+  const handleSubmit = async (e: React.FormEvent, overrideText?: string) => {
+    e.preventDefault()
+    const textToSubmit = overrideText || input.trim()
+    if (!textToSubmit || isLoading) return
+
+    const inputText = textToSubmit.trim()
+    const lowerInput = inputText.toLowerCase()
+
     // Detect fix commands: "fix:", "fix that", "fix this", etc.
-    const isFixCommand = lowerInput.startsWith('fix:') || 
-                         lowerInput.startsWith('fix that') || 
-                         lowerInput.startsWith('fix this') ||
-                         (lowerInput.startsWith('fix ') && (lowerInput.includes('should be') || lowerInput.includes('to ')))
+    const isFixCommand = lowerInput.startsWith('fix:') ||
+      lowerInput.startsWith('fix that') ||
+      lowerInput.startsWith('fix this') ||
+      (lowerInput.startsWith('fix ') && (lowerInput.includes('should be') || lowerInput.includes('to ')))
 
     const userMessage: Message = {
       id: Date.now(),
@@ -48,9 +165,77 @@ export default function ChatInterface() {
     setIsLoading(true)
 
     try {
+      // Store user message in message log
+      try {
+        await fetch('/api/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            role: 'user',
+            content: inputText,
+          }),
+        })
+      } catch (error) {
+        console.error('Error storing message log:', error)
+      }
+
+      // First check if this is a general query (not just task query)
+      let isGeneralQuery = false
+      try {
+        const queryIntentResponse = await fetch('/api/query/detect', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ message: inputText }),
+        })
+
+        if (queryIntentResponse.ok) {
+          const queryIntentResult = await queryIntentResponse.json()
+          isGeneralQuery = queryIntentResult.isQuery === true
+        }
+      } catch (error) {
+        console.error('Error detecting general query intent:', error)
+      }
+
+      // Handle general queries (search across all databases)
+      if (isGeneralQuery) {
+        try {
+          const queryResponse = await fetch('/api/query', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ query: inputText }),
+          })
+
+          if (!queryResponse.ok) {
+            throw new Error('Failed to execute query')
+          }
+
+          const queryResult = await queryResponse.json()
+
+          const botMessage: Message = {
+            id: Date.now() + 1,
+            text: queryResult.total_results === 0
+              ? `No results found for "${inputText}"`
+              : `Found ${queryResult.total_results} result${queryResult.total_results !== 1 ? 's' : ''} for "${inputText}"`,
+            queryResults: queryResult.results,
+            timestamp: new Date(),
+            isUser: false,
+          }
+
+          setMessages((prev) => [...prev, botMessage])
+          setIsLoading(false)
+          return
+        } catch (error) {
+          console.error('Error executing query:', error)
+          // Fall through to normal capture if query fails
+        }
+      }
+
       // Use LLM to detect if this is a query about existing tasks vs creating a new task
       let intentResult = { isQuery: false, type: null as 'today' | 'date' | null, date: undefined as string | undefined }
-      
+
       try {
         const intentResponse = await fetch('/api/intent/detect', {
           method: 'POST',
@@ -58,12 +243,12 @@ export default function ChatInterface() {
           credentials: 'include',
           body: JSON.stringify({ message: inputText }),
         })
-        
+
         // Check if we were redirected (e.g., to login page)
         if (intentResponse.redirected || intentResponse.url.includes('/auth/signin')) {
           throw new Error('Intent detection API redirected to auth page')
         }
-        
+
         if (intentResponse.ok) {
           intentResult = await intentResponse.json()
         } else {
@@ -74,19 +259,19 @@ export default function ChatInterface() {
         console.error('❌ Error calling intent detection API:', intentError)
         // Continue with normal capture if intent detection fails
       }
-      
+
       // Handle MCP tool queries (list tasks) - use LLM detection
       if (intentResult.isQuery && intentResult.type) {
         let toolName = ''
         let parameters: any = {}
-        
+
         if (intentResult.type === 'today') {
           toolName = 'list_tasks_due_today'
         } else if (intentResult.type === 'date' && intentResult.date) {
           toolName = 'list_tasks_due_on_date'
           parameters = { date: intentResult.date }
         }
-        
+
         if (toolName) {
           const mcpResponse = await fetch('/api/mcp/tools', {
             method: 'POST',
@@ -96,17 +281,17 @@ export default function ChatInterface() {
               parameters,
             }),
           })
-          
+
           if (!mcpResponse.ok) {
             throw new Error('Failed to fetch tasks')
           }
-          
+
           const mcpResult = await mcpResponse.json()
-          
+
           // Format the response
           let responseText = ''
           const dateLabel = intentResult.type === 'today' ? 'due today' : `due on ${intentResult.date}`
-          
+
           if (mcpResult.count === 0) {
             responseText = `📋 No tasks found ${dateLabel}.`
           } else {
@@ -123,7 +308,7 @@ export default function ChatInterface() {
             })
             responseText += `\n👉 Click "View →" below to see all tasks on the admin page`
           }
-          
+
           const botMessage: Message = {
             id: Date.now() + 1,
             text: responseText,
@@ -139,18 +324,18 @@ export default function ChatInterface() {
             timestamp: new Date(),
             isUser: false,
           }
-          
+
           setMessages((prev) => [...prev, botMessage])
           setIsLoading(false)
           return
         }
       }
-      
+
       if (isFixCommand) {
         // CRITICAL: Never process fix commands as normal captures
         // Handle fix command - find the last capture result
         const lastBotMessage = [...messages].reverse().find(m => !m.isUser && m.result && m.result.logId)
-        
+
         if (!lastBotMessage || !lastBotMessage.result || !lastBotMessage.result.logId) {
           const errorMessage: Message = {
             id: Date.now() + 1,
@@ -170,14 +355,14 @@ export default function ChatInterface() {
           .replace(/^fix\s+(that|this)\s+/i, '')
           .replace(/^fix\s+/i, '')
           .trim()
-        
+
         // Extract category - look for "should be X" or "to X" patterns
         let categoryMatch = fixText.match(/(?:should be|to)\s+(\w+)/i)
         if (!categoryMatch) {
           // If no pattern match, try to find category word anywhere
           categoryMatch = fixText.match(/\b(people|projects|ideas|admin)\b/i)
         }
-        
+
         // If no exact match, try fuzzy matching for common typos
         if (!categoryMatch) {
           const lowerFix = fixText.toLowerCase()
@@ -192,7 +377,7 @@ export default function ChatInterface() {
             categoryMatch = ['admin', 'admin']
           }
         }
-        
+
         if (!categoryMatch) {
           const errorMessage: Message = {
             id: Date.now() + 1,
@@ -206,14 +391,14 @@ export default function ChatInterface() {
         }
 
         const newCategory = categoryMatch[1].toLowerCase()
-        
+
         // Call fix API
         const fixResponse = await fetch('/api/fix', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
+          body: JSON.stringify({
             logId: lastBotMessage.result.logId,
-            category: newCategory 
+            category: newCategory
           }),
         })
 
@@ -255,11 +440,17 @@ export default function ChatInterface() {
         const response = await fetch('/api/capture', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({ message: inputText }),
         })
 
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: response.statusText }))
+          throw new Error(errorData?.error || errorData?.message || `Failed to capture: ${response.statusText}`)
+        }
+
         const payload = await response.json()
-        if (!response.ok || payload?.success === false) {
+        if (payload?.success === false) {
           throw new Error(payload?.error || payload?.message || 'Failed to capture message')
         }
 
@@ -282,7 +473,24 @@ export default function ChatInterface() {
         }
 
         setMessages((prev) => [...prev, botMessage])
-        
+
+        // Store assistant message in message log
+        try {
+          await fetch('/api/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+              role: 'assistant',
+              content: result.message,
+              category: result.category,
+              destinationUrl: result.destinationUrl,
+            }),
+          })
+        } catch (error) {
+          console.error('Error storing assistant message:', error)
+        }
+
         // Notify all components to refresh data when a new item is created
         if (result.success && result.category && result.category !== 'Needs Review') {
           notifyUpdate(result.category as any)
@@ -291,6 +499,7 @@ export default function ChatInterface() {
         }
       }
     } catch (error) {
+      console.error('Error in handleSubmit:', error)
       const errorMessage: Message = {
         id: Date.now() + 1,
         text: `❌ Error: ${error instanceof Error ? error.message : 'Failed to process message'}`,
@@ -304,57 +513,104 @@ export default function ChatInterface() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-gray-800 rounded-lg shadow-lg">
+    <div className="flex flex-col h-full bg-surface rounded-xl shadow-2xl border border-border overflow-hidden">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+      <div className="p-4 border-b border-border bg-surface/50 backdrop-blur-sm">
+        <h2 className="text-xl font-bold text-textPrimary tracking-tight">
           Capture Thoughts
         </h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+        <p className="text-sm text-textMuted mt-1">
           Type any thought and I'll organize it for you
         </p>
+
+        {/* Current Meeting Status Indicator */}
+        <div className={`mt-4 p-3 rounded-xl border transition-all duration-300 ${currentMeeting
+          ? 'bg-primary/10 border-primary/30 shadow-[0_0_15px_rgba(109,95,248,0.1)]'
+          : 'bg-surfaceElevated border-border'
+          }`}>
+          <div className="flex items-center gap-3">
+            <div className="flex-shrink-0">
+              <div className={`w-2.5 h-2.5 rounded-full ${currentMeeting
+                ? 'bg-primary animate-pulse shadow-[0_0_8px_#6D5EF8]'
+                : 'bg-textMuted/30'
+                }`}></div>
+            </div>
+            <div className="flex-1 min-w-0">
+              {currentMeeting ? (
+                <>
+                  <p className="text-xs font-semibold text-primary uppercase tracking-wider">
+                    In Meeting
+                  </p>
+                  <p className="text-sm text-textPrimary font-medium truncate mt-0.5">
+                    {currentMeeting.subject}
+                  </p>
+                  <p className="text-xs text-textMuted mt-0.5">
+                    Until {new Date(currentMeeting.endTime).toLocaleTimeString('en-US', {
+                      hour: 'numeric',
+                      minute: '2-digit',
+                      hour12: true,
+                    })}
+                  </p>
+                </>
+              ) : (
+                <p className="text-sm font-medium text-textMuted">
+                  Not in a meeting
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-6 scroll-smooth">
         {messages.length === 0 && (
-          <div className="text-center text-gray-500 dark:text-gray-400 py-8">
-            <p className="mb-2">No messages yet</p>
-            <p className="text-sm">Start by typing a thought or idea...</p>
+          <div className="text-center text-textMuted py-12 flex flex-col items-center justify-center">
+            <div className="w-12 h-12 rounded-full bg-surfaceElevated flex items-center justify-center mb-4 border border-border">
+              <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+              </svg>
+            </div>
+            <p className="font-medium text-textPrimary">No messages yet</p>
+            <p className="text-sm mt-1">Start by typing a thought or idea...</p>
           </div>
         )}
 
         {messages.map((message) => (
           <div
             key={message.id}
-            className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
+            className={`flex ${message.isUser ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}
           >
             <div
-              className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                message.isUser
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
-              }`}
+              className={`max-w-[85%] rounded-2xl px-4 py-3 shadow-md ${message.isUser
+                ? 'bg-primary text-textPrimary rounded-tr-none shadow-[0_4px_15px_rgba(109,95,248,0.3)]'
+                : 'bg-surfaceElevated text-textPrimary rounded-tl-none border border-border'
+                }`}
             >
-              <p className="text-sm whitespace-pre-wrap">{message.text}</p>
+              <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.text}</p>
+              {message.queryResults && message.queryResults.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-border/50">
+                  <QueryResults
+                    results={message.queryResults}
+                    query={message.text}
+                    total_results={message.queryResults.length}
+                  />
+                </div>
+              )}
               {message.result && (
-                <div className="mt-2 pt-2 border-t border-gray-300 dark:border-gray-600">
-                  {/* Display captured dates */}
+                <div className="mt-3 pt-3 border-t border-border/50">
+                  {/* Display captured fields */}
                   {message.result.fields && (() => {
                     const fields = message.result.fields
-                    const dates: Array<{ label: string; value: string }> = []
-                    
+                    const items: Array<{ label: string; value: string; isTag?: boolean }> = []
+
                     // Helper to format date
                     const formatDate = (dateValue: any): string | null => {
                       if (!dateValue) return null
-                      
                       try {
-                        // Handle ISO date strings (YYYY-MM-DD)
                         let date: Date
                         if (typeof dateValue === 'string') {
-                          // Check if it's just a date (YYYY-MM-DD) or includes time
                           if (/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
-                            // Just date, parse as UTC to avoid timezone issues
                             date = new Date(dateValue + 'T00:00:00')
                           } else {
                             date = new Date(dateValue)
@@ -362,118 +618,88 @@ export default function ChatInterface() {
                         } else {
                           date = new Date(dateValue)
                         }
-                        
                         if (!isNaN(date.getTime())) {
-                          // Format as readable date/time
                           const dateStr = date.toLocaleDateString()
                           const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                          // If it's just a date (no time component), don't show time
                           if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
                             return dateStr
                           }
                           return `${dateStr} ${timeStr}`
                         }
-                      } catch (e) {
-                        console.warn('Failed to parse date:', dateValue, e)
-                      }
-                      
+                      } catch (e) { }
                       return String(dateValue)
                     }
-                    
-                    // Check for due_date (admin tasks)
+
                     if (fields.due_date) {
                       const formatted = formatDate(fields.due_date)
-                      if (formatted) {
-                        dates.push({ label: 'Due Date', value: formatted })
-                      }
+                      if (formatted) items.push({ label: 'Due Date', value: formatted })
                     }
-                    
-                    // Check for other date fields (created_at, updated_at, etc.)
-                    Object.entries(fields).forEach(([key, value]) => {
-                      if (key !== 'due_date' && (key.includes('date') || key.includes('Date')) && value) {
-                        const formatted = formatDate(value)
-                        if (formatted) {
-                          const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
-                          dates.push({ label, value: formatted })
-                        }
-                      }
-                    })
-                    
-                    if (dates.length > 0) {
+
+                    if (message.result.category && message.result.category !== 'Needs Review') {
+                      items.push({
+                        label: 'Category',
+                        value: message.result.category.toString(),
+                        isTag: true
+                      })
+                    }
+
+                    if (items.length > 0) {
                       return (
-                        <div className="mb-2 space-y-1">
-                          {dates.map((date, idx) => (
-                            <p key={idx} className="text-xs opacity-90">
-                              <span className="font-medium">{date.label}:</span> {date.value}
-                            </p>
+                        <div className="mb-2 flex flex-wrap gap-2">
+                          {items.map((item, idx) => (
+                            <div key={idx} className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-widest ${item.isTag ? 'bg-secondary/20 text-secondary border border-secondary/30' : 'bg-surface/50 text-textMuted'}`}>
+                              {item.label}: {item.value}
+                            </div>
                           ))}
                         </div>
                       )
                     }
                     return null
                   })()}
-                  {message.result.destinationUrl && (() => {
-                    const url = message.result.destinationUrl
-                    
-                    // Check if it's an internal URL (starts with / or matches our base URL)
-                    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-                    const isInternal = url.startsWith('/') || url.startsWith(baseUrl)
-                    
-                    if (isInternal) {
-                      // Extract the path (remove base URL if present, ensure it starts with /)
-                      let path = url.startsWith(baseUrl) 
-                        ? url.replace(baseUrl, '') 
-                        : url
-                      
-                      // Ensure path starts with /
-                      if (!path.startsWith('/')) {
-                        path = '/' + path
-                      }
-                      
-                      // Use Next.js Link for internal navigation (preserves chat state)
-                      return (
-                        <Link
-                          href={path}
-                          className="text-xs underline opacity-90 hover:opacity-100"
-                        >
-                          View →
-                        </Link>
-                      )
-                    } else {
-                      // Use regular anchor for external URLs
-                      return (
-                        <a
-                          href={url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs underline opacity-90 hover:opacity-100"
-                        >
-                          View →
-                        </a>
-                      )
-                    }
-                  })()}
-                  {message.result.category === 'Needs Review' && (
-                    <p className="text-xs mt-1 opacity-75">
-                      Confidence: {(message.result.confidence * 100).toFixed(0)}%
-                    </p>
-                  )}
+
+                  <div className="flex items-center justify-between mt-1">
+                    {message.result.destinationUrl && (
+                      <Link
+                        href={message.result.destinationUrl.startsWith('http') ? message.result.destinationUrl : message.result.destinationUrl}
+                        className="text-xs font-bold text-secondary hover:text-secondary/80 transition-colors flex items-center gap-1 group"
+                      >
+                        View Details
+                        <svg className="w-3 h-3 transform group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </Link>
+                    )}
+
+                    {message.result.category === 'Needs Review' && (
+                      <span className="text-[10px] font-bold text-highlight uppercase tracking-wider flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 bg-highlight rounded-full animate-pulse"></span>
+                        Low Confidence
+                      </span>
+                    )}
+                  </div>
                 </div>
               )}
-              <p className="text-xs opacity-75 mt-1">
-                {message.timestamp.toLocaleTimeString()}
-              </p>
+              <div className="flex justify-between items-center mt-2">
+                <p className="text-[10px] font-medium text-textMuted uppercase tracking-tighter">
+                  {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </p>
+                {message.isUser && (
+                  <svg className="w-3 h-3 text-textPrimary/50" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                )}
+              </div>
             </div>
           </div>
         ))}
 
         {isLoading && (
-          <div className="flex justify-start">
-            <div className="bg-gray-100 dark:bg-gray-700 rounded-lg px-4 py-2">
-              <div className="flex space-x-1">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+          <div className="flex justify-start animate-pulse">
+            <div className="bg-surfaceElevated border border-border rounded-2xl rounded-tl-none px-4 py-3">
+              <div className="flex space-x-1.5">
+                <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce"></div>
+                <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
               </div>
             </div>
           </div>
@@ -483,28 +709,69 @@ export default function ChatInterface() {
       </div>
 
       {/* Input */}
-      <form onSubmit={handleSubmit} className="p-4 border-t border-gray-200 dark:border-gray-700">
-        <div className="flex space-x-2">
-          <input
-            type="text"
+      <div className="p-4 bg-surface/80 backdrop-blur-md border-t border-border">
+        <CapturePredictions
+          onAccept={(prediction) => {
+            setInput(prediction.content)
+            // Optionally auto-submit
+            setTimeout(() => {
+              const form = document.querySelector('form') as HTMLFormElement
+              if (form) {
+                form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }))
+              }
+            }, 100)
+          }}
+        />
+        <form onSubmit={handleSubmit} className="relative group">
+          <SmartAutocomplete
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={setInput}
             placeholder="Type your thought here..."
-            className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+            className="w-full pl-4 pr-28 py-3 bg-surfaceElevated border border-border rounded-xl text-textPrimary placeholder-textMuted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all duration-300"
             disabled={isLoading}
           />
-          <button
-            type="submit"
-            disabled={!input.trim() || isLoading}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
-          >
-            Send
-          </button>
+          <div className="absolute right-2 top-2 flex items-center gap-1">
+            {isVoiceSupported && (
+              <button
+                type="button"
+                onClick={isListening ? stopVoiceInput : startVoiceInput}
+                disabled={isLoading}
+                className={`p-1.5 rounded-lg transition-all duration-300 ${
+                  isListening
+                    ? 'bg-red-600 text-white hover:bg-red-700 animate-pulse'
+                    : 'bg-surfaceElevated text-textMuted hover:text-textPrimary hover:bg-surface border border-border'
+                } disabled:opacity-30 disabled:cursor-not-allowed`}
+                title={isListening ? 'Stop recording' : 'Start voice input'}
+              >
+                {isListening ? (
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                  </svg>
+                )}
+              </button>
+            )}
+            <button
+              type="submit"
+              disabled={!input.trim() || isLoading}
+              className="p-1.5 bg-primary text-textPrimary rounded-lg hover:bg-primary/90 disabled:opacity-30 disabled:grayscale transition-all duration-300 shadow-lg shadow-primary/20"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
+            </button>
+          </div>
+        </form>
+        <div className="flex items-center justify-end mt-2 px-1">
+          <div className="flex gap-2">
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-surfaceElevated text-textMuted border border-border">fix: ...</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-surfaceElevated text-textMuted border border-border">today?</span>
+          </div>
         </div>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-          Press Enter to send • One message = one thought • Use "fix that should be [category]" to correct the last classification
-        </p>
-      </form>
+      </div>
     </div>
   )
 }

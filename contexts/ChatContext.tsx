@@ -2,11 +2,13 @@
 
 import { createContext, useContext, useState, ReactNode } from 'react'
 import type { CaptureResult } from '@/lib/services/capture'
+import type { QueryResult } from '@/components/QueryResults'
 
 export interface Message {
   id: number
   text: string
   result?: CaptureResult
+  queryResults?: QueryResult[]
   timestamp: Date
   isUser: boolean
 }

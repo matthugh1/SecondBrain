@@ -67,22 +67,33 @@ export default function TimelinePage() {
   }, {} as Record<string, TimelineItem[]>)
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+    <div className="min-h-screen bg-background">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="mb-8">
+          <nav className="mb-4">
+            <Link
+              href="/"
+              className="text-xs font-bold text-primary uppercase tracking-widest hover:text-primary/80 transition-colors flex items-center gap-1 group"
+            >
+              <svg className="w-3 h-3 transform group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" />
+              </svg>
+              Dashboard
+            </Link>
+          </nav>
+          <h1 className="text-4xl font-black text-textPrimary tracking-tight">
             Timeline
           </h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
+          <p className="mt-2 text-textMuted font-medium italic">
             Chronological view of all captures
           </p>
         </div>
 
         {/* Filters */}
-        <div className="mb-6 p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
+        <div className="mb-6 bg-surfaceElevated border border-border/60 rounded-xl shadow-xl p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-xs font-bold text-textMuted uppercase tracking-widest mb-2">
                 Types
               </label>
               <div className="flex flex-wrap gap-2">
@@ -95,10 +106,10 @@ export default function TimelinePage() {
                         : [...filters.types, type]
                       setFilters({ ...filters, types: newTypes })
                     }}
-                    className={`px-3 py-1 text-sm rounded ${
+                    className={`px-3 py-1 text-sm rounded-lg font-medium transition-all ${
                       filters.types.includes(type)
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                        ? 'bg-primary text-textPrimary shadow-lg shadow-primary/20'
+                        : 'bg-surface text-textMuted hover:bg-surfaceElevated border border-border/60'
                     }`}
                   >
                     {type}
@@ -107,7 +118,7 @@ export default function TimelinePage() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-xs font-bold text-textMuted uppercase tracking-widest mb-2">
                 Date Range
               </label>
               <div className="flex gap-2">
@@ -115,13 +126,13 @@ export default function TimelinePage() {
                   type="date"
                   value={filters.dateFrom}
                   onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
-                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="px-3 py-2 bg-surface border border-border/60 rounded-lg text-textPrimary focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                 />
                 <input
                   type="date"
                   value={filters.dateTo}
                   onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
-                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="px-3 py-2 bg-surface border border-border/60 rounded-lg text-textPrimary focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                 />
               </div>
             </div>
@@ -129,16 +140,27 @@ export default function TimelinePage() {
         </div>
 
         {loading ? (
-          <div className="text-center py-8">Loading...</div>
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin mb-4"></div>
+            <p className="text-textMuted font-medium italic">Loading...</p>
+          </div>
         ) : Object.keys(groupedByDate).length === 0 ? (
-          <div className="text-center py-8 text-gray-500">No items found</div>
+          <div className="bg-surfaceElevated border border-border/60 rounded-xl shadow-xl p-20 text-center">
+            <div className="w-16 h-16 bg-surface border border-border/60 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-8 h-8 text-textMuted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-bold text-textPrimary mb-2">No Items</h2>
+            <p className="text-textMuted max-w-sm mx-auto">No items found</p>
+          </div>
         ) : (
           <div className="space-y-8">
             {Object.entries(groupedByDate)
               .sort((a, b) => new Date(b[0]).getTime() - new Date(a[0]).getTime())
               .map(([date, dateItems]) => (
                 <div key={date}>
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                  <h2 className="text-xl font-black text-textPrimary mb-4 tracking-tight">
                     {date}
                   </h2>
                   <div className="space-y-3">
@@ -146,20 +168,20 @@ export default function TimelinePage() {
                       <Link
                         key={`${item.item_type}-${item.item_id}`}
                         href={`/${item.item_type}/${item.item_id}`}
-                        className="block p-4 bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-md transition-shadow"
+                        className="block p-4 bg-surfaceElevated border border-border/60 rounded-xl shadow-xl hover:bg-surface hover:-translate-y-1 transition-all duration-300"
                       >
-                        <div className="flex items-start justify-between">
+                        <div className="flex items-start justify-between gap-4">
                           <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded capitalize">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="px-2 py-0.5 text-xs font-bold text-textMuted uppercase tracking-widest bg-surface border border-border/60 rounded-lg capitalize">
                                 {item.item_type}
                               </span>
-                              <span className="font-medium text-gray-900 dark:text-white">
+                              <span className="font-bold text-textPrimary">
                                 {item.title}
                               </span>
                             </div>
                             {item.content && (
-                              <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                              <p className="text-sm text-textMuted line-clamp-2 mb-2">
                                 {item.content}
                               </p>
                             )}
@@ -168,7 +190,7 @@ export default function TimelinePage() {
                                 {item.tags.split(' ').filter(Boolean).map((tag, idx) => (
                                   <span
                                     key={idx}
-                                    className="px-2 py-0.5 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded"
+                                    className="px-2 py-0.5 text-xs font-bold bg-primary/20 text-primary border border-primary/30 rounded-lg"
                                   >
                                     {tag}
                                   </span>

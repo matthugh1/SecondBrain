@@ -12,6 +12,7 @@ interface FilterProps {
 
 export interface FilterState {
   status?: string
+  priority?: string
   tags?: string[]
   dateFrom?: string
   dateTo?: string
@@ -23,7 +24,7 @@ export default function Filters({ database, onFiltersChange, statusOptions = [],
   const [filters, setFilters] = useState<FilterState>(initialFilters || {})
   const [availableTags, setAvailableTags] = useState<{ id: number; name: string }[]>([])
   const [showFilters, setShowFilters] = useState(false)
-  
+
   // Update filters when initialFilters prop changes (e.g., from URL params)
   useEffect(() => {
     if (initialFilters) {
@@ -62,36 +63,39 @@ export default function Filters({ database, onFiltersChange, statusOptions = [],
     onFiltersChange(cleared)
   }
 
-  const hasActiveFilters = filters.status || filters.tags?.length || filters.dateFrom || filters.dateTo || filters.dueDate || filters.archived
+  const hasActiveFilters = filters.status || filters.priority || filters.tags?.length || filters.dateFrom || filters.dateTo || filters.dueDate || filters.archived
 
   return (
     <div className="mb-4">
       <button
         onClick={() => setShowFilters(!showFilters)}
-        className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+        className="px-4 py-2 text-sm border border-border/60 rounded-xl bg-surfaceElevated text-textPrimary hover:bg-surface transition-all shadow-lg hover:shadow-primary/10 flex items-center gap-2"
       >
+        <svg className={`w-4 h-4 transition-transform duration-300 ${showFilters ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
         {showFilters ? 'Hide Filters' : 'Show Filters'}
         {hasActiveFilters && (
-          <span className="ml-2 px-2 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-xs">
+          <span className="ml-2 px-2 py-0.5 bg-primary/20 text-primary border border-primary/30 rounded-full text-[10px] font-bold uppercase tracking-wider animate-pulse">
             Active
           </span>
         )}
       </button>
 
       {showFilters && (
-        <div className="mt-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="mt-4 p-6 border border-border/60 rounded-2xl bg-surface shadow-2xl animate-in fade-in zoom-in-95 duration-300">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {statusOptions.length > 0 && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-[10px] font-bold text-textMuted uppercase tracking-widest mb-2 ml-1">
                   Status
                 </label>
                 <select
                   value={filters.status || ''}
                   onChange={(e) => updateFilter('status', e.target.value || undefined)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-2.5 bg-surfaceElevated border border-border/60 rounded-xl text-textPrimary focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                 >
-                  <option value="">All</option>
+                  <option value="">All Statuses</option>
                   {statusOptions.map((opt) => (
                     <option key={opt.value} value={opt.value}>
                       {opt.label}
@@ -101,46 +105,65 @@ export default function Filters({ database, onFiltersChange, statusOptions = [],
               </div>
             )}
 
+            {database === 'admin' && (
+              <div>
+                <label className="block text-[10px] font-bold text-textMuted uppercase tracking-widest mb-2 ml-1">
+                  Priority
+                </label>
+                <select
+                  value={filters.priority || ''}
+                  onChange={(e) => updateFilter('priority', e.target.value || undefined)}
+                  className="w-full px-4 py-2.5 bg-surfaceElevated border border-border/60 rounded-xl text-textPrimary focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                >
+                  <option value="">All Priorities</option>
+                  <option value="urgent">Urgent</option>
+                  <option value="high">High</option>
+                  <option value="medium">Medium</option>
+                  <option value="low">Low</option>
+                </select>
+              </div>
+            )}
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-[10px] font-bold text-textMuted uppercase tracking-widest mb-2 ml-1">
                 Date From
               </label>
               <input
                 type="date"
                 value={filters.dateFrom || ''}
                 onChange={(e) => updateFilter('dateFrom', e.target.value || undefined)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="w-full px-4 py-2.5 bg-surfaceElevated border border-border/60 rounded-xl text-textPrimary focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-[10px] font-bold text-textMuted uppercase tracking-widest mb-2 ml-1">
                 Date To
               </label>
               <input
                 type="date"
                 value={filters.dateTo || ''}
                 onChange={(e) => updateFilter('dateTo', e.target.value || undefined)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="w-full px-4 py-2.5 bg-surfaceElevated border border-border/60 rounded-xl text-textPrimary focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
               />
             </div>
 
             {database === 'admin' && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-[10px] font-bold text-textMuted uppercase tracking-widest mb-2 ml-1">
                   Due Date
                 </label>
                 <input
                   type="date"
                   value={filters.dueDate || ''}
                   onChange={(e) => updateFilter('dueDate', e.target.value || undefined)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-2.5 bg-surfaceElevated border border-border/60 rounded-xl text-textPrimary focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                 />
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-[10px] font-bold text-textMuted uppercase tracking-widest mb-2 ml-1">
                 Archived
               </label>
               <select
@@ -149,29 +172,28 @@ export default function Filters({ database, onFiltersChange, statusOptions = [],
                   const val = e.target.value
                   updateFilter('archived', val === '' ? undefined : val === 'true')
                 }}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="w-full px-4 py-2.5 bg-surfaceElevated border border-border/60 rounded-xl text-textPrimary focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
               >
-                <option value="">Exclude Archived</option>
-                <option value="false">Exclude Archived</option>
+                <option value="">Active Only</option>
+                <option value="false">Active Only</option>
                 <option value="true">Include Archived</option>
               </select>
             </div>
           </div>
 
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Tags
+          <div className="mt-8">
+            <label className="block text-[10px] font-bold text-textMuted uppercase tracking-widest mb-3 ml-1">
+              Filter by Tags
             </label>
             <div className="flex flex-wrap gap-2">
               {availableTags.map((tag) => (
                 <button
                   key={tag.id}
                   onClick={() => toggleTag(tag.name)}
-                  className={`px-3 py-1 text-sm rounded-lg border ${
-                    filters.tags?.includes(tag.name)
-                      ? 'bg-blue-500 text-white border-blue-600'
-                      : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
-                  }`}
+                  className={`px-4 py-1.5 text-xs rounded-xl border transition-all duration-300 font-bold uppercase tracking-wider ${filters.tags?.includes(tag.name)
+                      ? 'bg-primary text-textPrimary border-primary shadow-lg shadow-primary/20'
+                      : 'bg-surfaceElevated text-textMuted border-border/60 hover:bg-surfaceElevated/80 hover:text-textPrimary'
+                    }`}
                 >
                   {tag.name}
                 </button>
@@ -180,11 +202,14 @@ export default function Filters({ database, onFiltersChange, statusOptions = [],
           </div>
 
           {hasActiveFilters && (
-            <div className="mt-4">
+            <div className="mt-8 pt-4 border-t border-border/30 flex justify-end">
               <button
                 onClick={clearFilters}
-                className="px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:underline"
+                className="px-4 py-2 text-xs font-bold text-error uppercase tracking-widest hover:bg-error/10 rounded-xl transition-all flex items-center gap-2"
               >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
                 Clear all filters
               </button>
             </div>

@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
     return tenantCheck
   }
   
-  const { tenantId } = tenantCheck
+  const { tenantId, userId } = tenantCheck
 
   try {
     const body = await request.json()
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const result = await captureMessage(tenantId, message.trim())
+    const result = await captureMessage(tenantId, message.trim(), userId)
     return NextResponse.json(result)
   } catch (error) {
     console.error('Error in capture API:', error)

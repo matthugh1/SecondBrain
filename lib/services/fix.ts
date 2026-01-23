@@ -5,6 +5,7 @@ import * as ideasRepo from '@/lib/db/repositories/ideas'
 import * as adminRepo from '@/lib/db/repositories/admin'
 import { getAllRuleCategories } from '@/lib/db/repositories/rules'
 import { createCorrection } from '@/lib/db/repositories/classification-learning'
+import * as userAnalyticsRepo from '@/lib/db/repositories/user-analytics'
 import type { Category } from '@/types'
 
 export interface FixResult {
@@ -23,7 +24,8 @@ function getDestinationUrl(database: Category, id: number): string {
 export async function fixClassification(
   tenantId: string,
   logId: number,
-  newCategory: Category
+  newCategory: Category,
+  userId?: string
 ): Promise<FixResult> {
   try {
     // Find the original inbox log entry
@@ -109,6 +111,13 @@ export async function fixClassification(
           corrected_category: newCategory,
           message_text: inboxLog.original_text,
         })
+        
+        // Track correction in analytics
+        if (userId) {
+          userAnalyticsRepo.recordCorrection(tenantId, userId).catch(err =>
+            console.error('Error recording correction analytics:', err)
+          )
+        }
       } catch (error) {
         console.error('Failed to record classification correction:', error)
         // Don't fail the fix operation if learning recording fails
@@ -152,6 +161,13 @@ export async function fixClassification(
           corrected_category: newCategory,
           message_text: inboxLog.original_text,
         })
+        
+        // Track correction in analytics
+        if (userId) {
+          userAnalyticsRepo.recordCorrection(tenantId, userId).catch(err =>
+            console.error('Error recording correction analytics:', err)
+          )
+        }
       } catch (error) {
         console.error('Failed to record classification correction:', error)
         // Don't fail the fix operation if learning recording fails

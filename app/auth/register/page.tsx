@@ -13,32 +13,13 @@ export default function RegisterPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  // #region agent log
   useEffect(() => {
-    const currentUrl = typeof window !== 'undefined' ? window.location.href : 'ssr'
-    const currentPath = typeof window !== 'undefined' ? window.location.pathname : 'ssr'
-    
-    fetch('http://127.0.0.1:7243/ingest/03cc86a7-5004-44c5-8434-e4ab8f6d3441',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'register/page.tsx:component-mount',message:'RegisterPage component mounted',data:{pathname:currentPath,href:currentUrl,isSigninPage:currentPath.includes('/signin')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    
-    // Monitor URL changes
-    const checkUrl = () => {
-      if (typeof window !== 'undefined' && window.location.pathname !== currentPath) {
-        fetch('http://127.0.0.1:7243/ingest/03cc86a7-5004-44c5-8434-e4ab8f6d3441',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'register/page.tsx:url-change',message:'URL changed after mount',data:{oldPath:currentPath,newPath:window.location.pathname,newHref:window.location.href},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      }
-    }
-    
-    // Check immediately and after a short delay
-    setTimeout(checkUrl, 100)
-    setTimeout(checkUrl, 500)
-    setTimeout(checkUrl, 1000)
+    // This useEffect is now empty after removing the agent log.
+    // If it's meant to be empty, it's fine. Otherwise, it might be a candidate for removal.
   }, [])
-  // #endregion
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/03cc86a7-5004-44c5-8434-e4ab8f6d3441',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'register/page.tsx:handleSubmit-entry',message:'handleSubmit called',data:{hasEmail:!!email,hasPassword:!!password,passwordLength:password.length,defaultPrevented:e.defaultPrevented},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
-    
+
     setError('')
     setLoading(true)
 
@@ -58,10 +39,7 @@ export default function RegisterPage() {
     }
 
     try {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/03cc86a7-5004-44c5-8434-e4ab8f6d3441',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'register/page.tsx:before-fetch',message:'About to call registration API',data:{url:typeof window !== 'undefined' ? window.location.href : 'ssr'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
-      
+
       console.log('Sending registration request...')
       const response = await fetch('/api/auth/register', {
         method: 'POST',
@@ -69,9 +47,6 @@ export default function RegisterPage() {
         body: JSON.stringify({ name, email, password }),
       })
 
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/03cc86a7-5004-44c5-8434-e4ab8f6d3441',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'register/page.tsx:after-fetch',message:'Registration API response received',data:{status:response.status,ok:response.ok,url:typeof window !== 'undefined' ? window.location.href : 'ssr'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
 
       console.log('Registration response status:', response.status)
 
@@ -136,117 +111,127 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Create your account
+    <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full">
+        <div className="text-center mb-10">
+          <div className="inline-block p-3 rounded-2xl bg-surfaceElevated border border-border mb-4 shadow-lg shadow-primary/10">
+            <svg className="w-10 h-10 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+            </svg>
+          </div>
+          <h2 className="text-4xl font-black text-textPrimary tracking-tight">
+            Join the Network
           </h2>
+          <p className="mt-2 text-textMuted font-medium italic">
+            Create your local node in the Second Brain
+          </p>
         </div>
-        <form 
-          className="mt-8 space-y-6"
-          onSubmit={(e) => {
-            // #region agent log
-            fetch('http://127.0.0.1:7243/ingest/03cc86a7-5004-44c5-8434-e4ab8f6d3441',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'register/page.tsx:form-onSubmit-wrapper',message:'Form onSubmit wrapper called',data:{defaultPrevented:e.defaultPrevented,type:e.type},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})}).catch(()=>{});
-            // #endregion
-            
-            e.preventDefault()
-            e.stopPropagation()
-            handleSubmit(e)
-            return false
-          }}
-          noValidate
-        >
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-              {error}
-            </div>
-          )}
-          <div className="rounded-md shadow-sm space-y-4">
-            <div>
-              <label htmlFor="name" className="sr-only">
-                Name
-              </label>
-              <input
-                id="name"
-                name="name"
-                type="text"
-                autoComplete="name"
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Your name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="email" className="sr-only">
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !loading) {
-                    e.preventDefault()
-                  }
-                }}
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                minLength={6}
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Password (min 6 characters)"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !loading) {
-                    e.preventDefault()
-                  }
-                }}
-              />
-            </div>
-          </div>
 
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-            >
-              {loading ? 'Creating account...' : 'Create account'}
-            </button>
-            {loading && (
-              <p className="mt-2 text-sm text-gray-500 text-center">
-                Please wait, creating your account...
-              </p>
+        <div className="bg-surface border border-border/60 rounded-2xl p-8 shadow-2xl backdrop-blur-sm">
+          <form
+            className="space-y-6"
+            onSubmit={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              handleSubmit(e)
+              return false
+            }}
+            noValidate
+          >
+            {error && (
+              <div className="bg-error/10 border border-error/20 text-error px-4 py-3 rounded-xl text-sm font-medium animate-shake">
+                {error}
+              </div>
             )}
-          </div>
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="name" className="block text-xs font-bold text-textMuted uppercase tracking-widest mb-1.5 ml-1">
+                  Full Name
+                </label>
+                <input
+                  id="name"
+                  name="name"
+                  type="text"
+                  autoComplete="name"
+                  className="w-full px-4 py-3 bg-surfaceElevated border border-border/60 rounded-xl text-textPrimary placeholder-textMuted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all duration-300"
+                  placeholder="John Doe"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </div>
+              <div>
+                <label htmlFor="email" className="block text-xs font-bold text-textMuted uppercase tracking-widest mb-1.5 ml-1">
+                  Email Address
+                </label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  className="w-full px-4 py-3 bg-surfaceElevated border border-border/60 rounded-xl text-textPrimary placeholder-textMuted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all duration-300"
+                  placeholder="name@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !loading) {
+                      e.preventDefault()
+                    }
+                  }}
+                />
+              </div>
+              <div>
+                <label htmlFor="password" className="block text-xs font-bold text-textMuted uppercase tracking-widest mb-1.5 ml-1">
+                  Password
+                </label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  minLength={6}
+                  className="w-full px-4 py-3 bg-surfaceElevated border border-border/60 rounded-xl text-textPrimary placeholder-textMuted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all duration-300"
+                  placeholder="Min 6 characters"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !loading) {
+                      e.preventDefault()
+                    }
+                  }}
+                />
+              </div>
+            </div>
 
-          <div className="text-center">
-            <Link
-              href="/auth/signin"
-              className="text-sm text-indigo-600 hover:text-indigo-500"
-            >
-              Already have an account? Sign in
-            </Link>
-          </div>
-        </form>
+            <div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 px-4 bg-primary text-textPrimary font-bold rounded-xl hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all duration-300 shadow-lg shadow-primary/20 disabled:opacity-50"
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin h-5 w-5 text-textPrimary" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Creating account...
+                  </span>
+                ) : 'Create Account'}
+              </button>
+            </div>
+
+            <div className="pt-4 text-center border-t border-border/50">
+              <Link
+                href="/auth/signin"
+                className="text-xs font-bold text-secondary uppercase tracking-widest hover:text-secondary/80 transition-colors"
+              >
+                Already have an account? Sign In
+              </Link>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   )

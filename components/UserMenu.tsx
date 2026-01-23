@@ -2,6 +2,7 @@
 
 import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 export default function UserMenu() {
   const { data: session } = useSession()
@@ -9,18 +10,18 @@ export default function UserMenu() {
 
   if (!session) {
     return (
-      <div className="flex gap-2">
+      <div className="flex gap-4">
         <a
           href="/auth/signin"
-          className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900"
+          className="px-4 py-2 text-xs font-bold text-textMuted uppercase tracking-widest hover:text-textPrimary transition-all"
         >
-          Sign In
+          Identify
         </a>
         <a
           href="/auth/register"
-          className="px-4 py-2 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700"
+          className="px-6 py-2 text-xs font-bold bg-primary text-textPrimary rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 uppercase tracking-widest"
         >
-          Register
+          Initialize
         </a>
       </div>
     )
@@ -28,16 +29,27 @@ export default function UserMenu() {
 
   return (
     <div className="flex items-center gap-4">
-      <span className="text-sm text-gray-700">
-        {session.user?.email}
-      </span>
+      <div className="flex flex-col items-end">
+        <span className="text-[10px] font-bold text-textMuted uppercase tracking-widest">
+          Node Operator
+        </span>
+        <span className="text-sm font-black text-textPrimary tracking-tight">
+          {session.user?.email}
+        </span>
+      </div>
+      <Link
+        href="/help"
+        className="px-4 py-2 text-xs font-bold text-textMuted uppercase tracking-widest hover:text-secondary hover:bg-secondary/10 border border-transparent hover:border-secondary/20 rounded-xl transition-all"
+      >
+        Help
+      </Link>
       <button
         onClick={() => {
           signOut({ callbackUrl: '/auth/signin' })
         }}
-        className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900"
+        className="px-4 py-2 text-xs font-bold text-textMuted uppercase tracking-widest hover:text-error hover:bg-error/10 border border-transparent hover:border-error/20 rounded-xl transition-all"
       >
-        Sign Out
+        Signal Out
       </button>
     </div>
   )

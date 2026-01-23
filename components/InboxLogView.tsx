@@ -127,7 +127,7 @@ export default function InboxLogView() {
   }
 
   if (loading) {
-    return <div className="text-center py-8">Loading...</div>
+    return <div className="text-center py-8 text-textPrimary">Loading...</div>
   }
 
   return (
@@ -135,40 +135,40 @@ export default function InboxLogView() {
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <button
           onClick={() => setFilter('all')}
-          className={`px-4 py-2 rounded ${
+          className={`px-4 py-2 rounded-lg font-medium transition-all ${
             filter === 'all'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+              ? 'bg-primary text-textPrimary shadow-lg shadow-primary/20'
+              : 'bg-surface text-textMuted hover:bg-surfaceElevated border border-border/60'
           }`}
         >
           All
         </button>
         <button
           onClick={() => setFilter('Filed')}
-          className={`px-4 py-2 rounded ${
+          className={`px-4 py-2 rounded-lg font-medium transition-all ${
             filter === 'Filed'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+              ? 'bg-primary text-textPrimary shadow-lg shadow-primary/20'
+              : 'bg-surface text-textMuted hover:bg-surfaceElevated border border-border/60'
           }`}
         >
           Filed
         </button>
         <button
           onClick={() => setFilter('Needs Review')}
-          className={`px-4 py-2 rounded ${
+          className={`px-4 py-2 rounded-lg font-medium transition-all ${
             filter === 'Needs Review'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+              ? 'bg-primary text-textPrimary shadow-lg shadow-primary/20'
+              : 'bg-surface text-textMuted hover:bg-surfaceElevated border border-border/60'
           }`}
         >
           Needs Review
         </button>
         <button
           onClick={() => setFilter('Fixed')}
-          className={`px-4 py-2 rounded ${
+          className={`px-4 py-2 rounded-lg font-medium transition-all ${
             filter === 'Fixed'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+              ? 'bg-primary text-textPrimary shadow-lg shadow-primary/20'
+              : 'bg-surface text-textMuted hover:bg-surfaceElevated border border-border/60'
           }`}
         >
           Fixed
@@ -177,10 +177,10 @@ export default function InboxLogView() {
         <button
           onClick={handleClearFiled}
           disabled={clearing}
-          className={`px-4 py-2 rounded border ${
+          className={`px-4 py-2 rounded-lg border font-medium transition-all ${
             clearing
-              ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 border-gray-200 dark:border-gray-700 cursor-not-allowed'
-              : 'bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
+              ? 'bg-surfaceElevated text-textMuted border-border/60 cursor-not-allowed opacity-50'
+              : 'bg-surface text-textPrimary border-border/60 hover:bg-surfaceElevated'
           }`}
         >
           {clearing ? 'Clearing Filed...' : 'Clear Filed Items'}
@@ -188,95 +188,95 @@ export default function InboxLogView() {
       </div>
 
       {clearError && (
-        <div className="mb-4 rounded border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-200">
+        <div className="mb-4 rounded-lg border border-error/30 bg-error/10 px-4 py-2 text-sm text-error">
           {clearError}
         </div>
       )}
       {clearSuccess && (
-        <div className="mb-4 rounded border border-green-200 bg-green-50 px-4 py-2 text-sm text-green-700 dark:border-green-900 dark:bg-green-950 dark:text-green-200">
+        <div className="mb-4 rounded-lg border border-success/30 bg-success/10 px-4 py-2 text-sm text-success">
           {clearSuccess}
         </div>
       )}
 
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className="bg-gray-50 dark:bg-gray-800">
+        <table className="min-w-full divide-y divide-border/60">
+          <thead className="bg-surface border-b border-border/60">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-[10px] font-bold text-textMuted uppercase tracking-widest">
                 Original Text
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-[10px] font-bold text-textMuted uppercase tracking-widest">
                 Filed To
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-[10px] font-bold text-textMuted uppercase tracking-widest">
                 Destination
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-[10px] font-bold text-textMuted uppercase tracking-widest">
                 Confidence
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-[10px] font-bold text-textMuted uppercase tracking-widest">
                 Status
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-[10px] font-bold text-textMuted uppercase tracking-widest">
                 Created
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-[10px] font-bold text-textMuted uppercase tracking-widest">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody className="bg-surfaceElevated divide-y divide-border/60">
             {logs.map((log) => (
               <tr 
                 key={log.id} 
                 ref={highlightLogId && parseInt(highlightLogId) === log.id ? highlightedRowRef : null}
-                className={`hover:bg-gray-50 dark:hover:bg-gray-800 ${
+                className={`hover:bg-surface/80 transition-colors border-b border-border/50 ${
                   highlightLogId && parseInt(highlightLogId) === log.id
-                    ? 'bg-yellow-100 dark:bg-yellow-900/30 ring-2 ring-yellow-400 dark:ring-yellow-600'
+                    ? 'bg-highlight/20 ring-2 ring-highlight/50'
                     : ''
                 }`}
               >
-                <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
+                <td className="px-6 py-4 text-sm text-textPrimary">
                   {log.original_text}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                  <span className="px-2 py-1 text-xs rounded bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  <span className="px-2 py-1 text-xs rounded-lg bg-primary/20 text-primary border border-primary/30 font-medium">
                     {log.filed_to}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
+                <td className="px-6 py-4 text-sm text-textPrimary">
                   {log.destination_url ? (
                     <a
                       href={log.destination_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-900 dark:text-blue-400"
+                      className="text-secondary hover:text-secondary/80 transition-colors font-medium"
                     >
                       {log.destination_name || 'View'}
                     </a>
                   ) : (
-                    '-'
+                    <span className="text-textMuted">-</span>
                   )}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-textPrimary font-medium">
                   {log.confidence !== null && log.confidence !== undefined
                     ? `${(log.confidence * 100).toFixed(0)}%`
-                    : '-'}
+                    : <span className="text-textMuted">-</span>}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                   <span
-                    className={`px-2 py-1 text-xs rounded ${
+                    className={`px-2 py-1 text-xs rounded-lg font-medium ${
                       log.status === 'Filed'
-                        ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
+                        ? 'bg-success/20 text-success border border-success/30'
                         : log.status === 'Needs Review'
-                        ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
+                        ? 'bg-warning/20 text-warning border border-warning/30'
+                        : 'bg-surface text-textMuted border border-border/60'
                     }`}
                   >
                     {log.status}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-textMuted">
                   {new Date(log.created).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -292,10 +292,10 @@ export default function InboxLogView() {
                     <button
                       onClick={() => handleDelete(log.id)}
                       disabled={deletingId === log.id}
-                      className={`px-3 py-1 text-xs rounded border ${
+                      className={`px-3 py-1 text-xs rounded-lg border font-medium transition-all ${
                         deletingId === log.id
-                          ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 border-gray-200 dark:border-gray-700 cursor-not-allowed'
-                          : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/30'
+                          ? 'bg-surfaceElevated text-textMuted border-border/60 cursor-not-allowed opacity-50'
+                          : 'bg-error/10 text-error border-error/30 hover:bg-error/20'
                       }`}
                       title="Delete this entry"
                     >

@@ -102,11 +102,11 @@ function PromptCard({
   }
 
   return (
-    <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+    <div className="border border-border/60 rounded-xl p-4 bg-surfaceElevated">
       {editingPrompt?.id === prompt.id ? (
         <div className="space-y-3">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="font-medium text-gray-900 dark:text-white">
+            <h3 className="font-bold text-textPrimary">
               {prompt.name}
             </h3>
             <div className="flex items-center gap-2">
@@ -118,14 +118,14 @@ function PromptCard({
               <button
                 onClick={() => handleSetActivePrompt(prompt.name)}
                 disabled={prompt.active === 1 || rulesSaving}
-                className="px-3 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50"
+                className="px-3 py-1 text-sm bg-primary text-textPrimary rounded hover:bg-primary/90 disabled:opacity-50 shadow-lg shadow-primary/20 transition-all"
               >
                 Set Active
               </button>
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-textMuted mb-1">
               Template
             </label>
             <textarea
@@ -137,9 +137,9 @@ function PromptCard({
                 })
               }
               rows={20}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-mono text-sm"
+              className="w-full px-3 py-2 bg-surface border border-border/60 rounded-lg text-textPrimary font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
             />
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-sm text-textMuted">
               {getPromptPlaceholders(prompt.name)}
             </p>
           </div>
@@ -147,13 +147,13 @@ function PromptCard({
             <button
               onClick={() => handleSavePrompt(editingPrompt)}
               disabled={rulesSaving}
-              className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50"
+              className="px-4 py-2 bg-primary text-textPrimary font-bold rounded-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 disabled:opacity-50"
             >
               Save
             </button>
             <button
               onClick={() => setEditingPrompt(null)}
-              className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
+              className="px-4 py-2 bg-surface text-textMuted border border-border/60 rounded-lg hover:bg-surfaceElevated transition-all"
             >
               Cancel
             </button>
@@ -162,7 +162,7 @@ function PromptCard({
       ) : (
         <div>
           <div className="flex items-center justify-between mb-2">
-            <h3 className="font-medium text-gray-900 dark:text-white">
+            <h3 className="font-bold text-textPrimary">
               {prompt.name}
             </h3>
             <div className="flex items-center gap-2">
@@ -173,13 +173,13 @@ function PromptCard({
               )}
               <button
                 onClick={() => setEditingPrompt(prompt)}
-                className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+                className="px-4 py-2 bg-primary text-textPrimary font-bold rounded-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
               >
                 Edit
               </button>
             </div>
           </div>
-          <pre className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap font-mono bg-gray-50 dark:bg-gray-900 p-3 rounded">
+          <pre className="text-sm text-textMuted whitespace-pre-wrap font-mono bg-background border border-border/60 p-3 rounded-lg">
             {prompt.template.substring(0, 200)}...
           </pre>
         </div>
@@ -589,28 +589,36 @@ function SettingsPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-background">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="mb-8">
-          <Link
-            href="/"
-            className="text-indigo-600 hover:text-indigo-500 mb-4 inline-block"
-          >
-            ← Back to Dashboard
-          </Link>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          <nav className="mb-4">
+            <Link
+              href="/"
+              className="text-xs font-bold text-primary uppercase tracking-widest hover:text-primary/80 transition-colors flex items-center gap-1 group"
+            >
+              <svg className="w-3 h-3 transform group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" />
+              </svg>
+              Dashboard
+            </Link>
+          </nav>
+          <h1 className="text-4xl font-black text-textPrimary tracking-tight">
             Settings
           </h1>
+          <p className="mt-2 text-textMuted font-medium italic">
+            Configure your workspace and preferences
+          </p>
         </div>
 
         {/* Tab Navigation */}
-        <div className="mb-6 flex gap-2 border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
+        <div className="mb-6 flex gap-2 border-b border-border/60 overflow-x-auto">
           <button
             onClick={() => setActiveTab('workspace')}
-            className={`px-4 py-2 font-medium whitespace-nowrap ${
+            className={`px-4 py-2 font-medium whitespace-nowrap transition-all ${
               activeTab === 'workspace'
-                ? 'border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                ? 'border-b-2 border-primary text-primary'
+                : 'text-textMuted hover:text-textPrimary'
             }`}
           >
             Workspace
@@ -700,17 +708,17 @@ function SettingsPageContent() {
               </div>
             )}
             {rulesSuccess && (
-              <div className="rounded border border-green-200 bg-green-50 px-4 py-2 text-sm text-green-700 dark:border-green-900 dark:bg-green-950 dark:text-green-200">
+              <div className="rounded border border-success/30 bg-success/10 px-4 py-2 text-sm text-success">
                 {rulesSuccess}
               </div>
             )}
             {llmError && (
-              <div className="rounded border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-200">
+              <div className="rounded border border-error/30 bg-error/10 px-4 py-2 text-sm text-error">
                 {llmError}
               </div>
             )}
             {llmSuccess && (
-              <div className="rounded border border-green-200 bg-green-50 px-4 py-2 text-sm text-green-700 dark:border-green-900 dark:bg-green-950 dark:text-green-200">
+              <div className="rounded border border-success/30 bg-success/10 px-4 py-2 text-sm text-success">
                 {llmSuccess}
               </div>
             )}
@@ -721,7 +729,7 @@ function SettingsPageContent() {
         {activeTab === 'workspace' && (
           <>
             {/* Workspace Name */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
+            <div className="bg-surfaceElevated border border-border/60 rounded-xl shadow-xl p-6 mb-6">
               <h2 className="text-xl font-semibold mb-4">Workspace Name</h2>
               <div className="flex gap-4">
                 <input
@@ -729,13 +737,13 @@ function SettingsPageContent() {
                   value={tenantName}
                   onChange={(e) => setTenantName(e.target.value)}
                   disabled={!canManage || saving}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+                  className="flex-1 px-4 py-2 bg-surface border border-border/60 rounded-lg text-textPrimary placeholder-textMuted focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all disabled:opacity-50"
                 />
                 {canManage && (
                   <button
                     onClick={handleSaveTenantName}
                     disabled={saving}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
+                    className="px-4 py-2 bg-primary text-textPrimary font-bold rounded-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 disabled:opacity-50"
                   >
                     {saving ? 'Saving...' : 'Save'}
                   </button>
@@ -745,7 +753,7 @@ function SettingsPageContent() {
 
             {/* Invite Members */}
             {canManage && (
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
+              <div className="bg-surfaceElevated border border-border/60 rounded-xl shadow-xl p-6 mb-6">
                 <h2 className="text-xl font-semibold mb-4">Invite Members</h2>
                 <div className="space-y-4">
                   <div className="flex gap-4">
@@ -754,12 +762,12 @@ function SettingsPageContent() {
                       value={inviteEmail}
                       onChange={(e) => setInviteEmail(e.target.value)}
                       placeholder="Email address"
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="flex-1 px-4 py-2 bg-surface border border-border/60 rounded-lg text-textPrimary placeholder-textMuted focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                     />
                     <select
                       value={inviteRole}
                       onChange={(e) => setInviteRole(e.target.value)}
-                      className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="px-4 py-2 bg-surface border border-border/60 rounded-lg text-textPrimary focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                     >
                       <option value="member">Member</option>
                       <option value="admin">Admin</option>
@@ -770,17 +778,17 @@ function SettingsPageContent() {
                     <button
                       onClick={handleInvite}
                       disabled={inviteLoading || !inviteEmail}
-                      className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
+                      className="px-4 py-2 bg-primary text-textPrimary font-bold rounded-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 disabled:opacity-50"
                     >
                       {inviteLoading ? 'Creating...' : 'Invite'}
                     </button>
                   </div>
                   {inviteLink && (
-                    <div className="p-4 bg-green-50 border border-green-200 rounded-md">
-                      <p className="text-sm text-green-800 mb-2">
+                    <div className="p-4 bg-success/10 border border-success/20 rounded-md">
+                      <p className="text-sm text-success mb-2">
                         Invite link created! Share this link:
                       </p>
-                      <code className="text-xs bg-white p-2 rounded block break-all">
+                      <code className="text-xs bg-surfaceElevated p-2 rounded block break-all text-textMuted">
                         {inviteLink}
                       </code>
                     </div>
@@ -790,13 +798,13 @@ function SettingsPageContent() {
             )}
 
             {/* Members List */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <div className="bg-surfaceElevated border border-border/60 rounded-xl shadow-xl p-6">
               <h2 className="text-xl font-semibold mb-4">Members</h2>
               <div className="space-y-3">
                 {members.map((member) => (
                   <div
                     key={member.id}
-                    className="flex items-center justify-between p-3 border border-gray-200 rounded-md"
+                    className="flex items-center justify-between p-3 bg-surface border border-border/60 rounded-lg"
                   >
                     <div>
                       <div className="font-medium">
@@ -826,7 +834,7 @@ function SettingsPageContent() {
             {llmSettings && (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-xs font-bold text-textMuted uppercase tracking-widest mb-1.5 ml-1">
                     Confidence Threshold
                   </label>
                   <input
@@ -841,14 +849,14 @@ function SettingsPageContent() {
                         confidence_threshold: parseFloat(e.target.value),
                       })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-full px-3 py-2 bg-surface border border-border/60 rounded-lg text-textPrimary focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                   />
-                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  <p className="mt-1 text-sm text-textMuted">
                     Items with confidence below this threshold will be marked for review (0.0 - 1.0)
                   </p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-xs font-bold text-textMuted uppercase tracking-widest mb-1.5 ml-1">
                     Default Project Status
                   </label>
                   <select
@@ -859,7 +867,7 @@ function SettingsPageContent() {
                         default_project_status: e.target.value,
                       })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-full px-3 py-2 bg-surface border border-border/60 rounded-lg text-textPrimary focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                   >
                     <option value="Active">Active</option>
                     <option value="Waiting">Waiting</option>
@@ -869,7 +877,7 @@ function SettingsPageContent() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-xs font-bold text-textMuted uppercase tracking-widest mb-1.5 ml-1">
                     Default Admin Status
                   </label>
                   <select
@@ -880,7 +888,7 @@ function SettingsPageContent() {
                         default_admin_status: e.target.value,
                       })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-full px-3 py-2 bg-surface border border-border/60 rounded-lg text-textPrimary focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                   >
                     <option value="Todo">Todo</option>
                     <option value="Done">Done</option>
@@ -928,7 +936,7 @@ function SettingsPageContent() {
                     {llmSettings.learning_enabled === 1 && (
                       <>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          <label className="block text-xs font-bold text-textMuted uppercase tracking-widest mb-1.5 ml-1">
                             Maximum Examples to Include
                           </label>
                           <input
@@ -942,14 +950,14 @@ function SettingsPageContent() {
                                 max_learning_examples: parseInt(e.target.value, 10) || 5,
                               })
                             }
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                            className="w-full px-3 py-2 bg-surface border border-border/60 rounded-lg text-textPrimary focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                           />
-                          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                          <p className="mt-1 text-sm text-textMuted">
                             Number of recent corrections to include as examples in classification prompts (1-20)
                           </p>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          <label className="block text-xs font-bold text-textMuted uppercase tracking-widest mb-1.5 ml-1">
                             Example Timeframe (Days)
                           </label>
                           <input
@@ -963,9 +971,9 @@ function SettingsPageContent() {
                                 example_timeframe_days: parseInt(e.target.value, 10) || 30,
                               })
                             }
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                            className="w-full px-3 py-2 bg-surface border border-border/60 rounded-lg text-textPrimary focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                           />
-                          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                          <p className="mt-1 text-sm text-textMuted">
                             How far back to look for correction examples (1-365 days)
                           </p>
                         </div>
@@ -977,7 +985,7 @@ function SettingsPageContent() {
                 <button
                   onClick={handleSaveLlmSettings}
                   disabled={llmSaving}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
+                  className="px-4 py-2 bg-primary text-textPrimary rounded-md hover:bg-primary/90 disabled:opacity-50 shadow-lg shadow-primary/20 transition-all"
                 >
                   {llmSaving ? 'Saving...' : 'Save LLM Settings'}
                 </button>
@@ -1001,7 +1009,7 @@ function SettingsPageContent() {
                   {editingCategory?.id === category.id ? (
                     <div className="space-y-3">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        <label className="block text-xs font-bold text-textMuted uppercase tracking-widest mb-1.5 ml-1">
                           Category Key
                         </label>
                         <input
@@ -1013,11 +1021,11 @@ function SettingsPageContent() {
                               category_key: e.target.value,
                             })
                           }
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                          className="w-full px-3 py-2 bg-surface border border-border/60 rounded-lg text-textPrimary focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        <label className="block text-xs font-bold text-textMuted uppercase tracking-widest mb-1.5 ml-1">
                           Label
                         </label>
                         <input
@@ -1029,11 +1037,11 @@ function SettingsPageContent() {
                               label: e.target.value,
                             })
                           }
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                          className="w-full px-3 py-2 bg-surface border border-border/60 rounded-lg text-textPrimary focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        <label className="block text-xs font-bold text-textMuted uppercase tracking-widest mb-1.5 ml-1">
                           Description
                         </label>
                         <textarea
@@ -1045,7 +1053,7 @@ function SettingsPageContent() {
                             })
                           }
                           rows={3}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                          className="w-full px-3 py-2 bg-surface border border-border/60 rounded-lg text-textPrimary focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                         />
                       </div>
                       <div className="flex items-center gap-2">
@@ -1068,13 +1076,13 @@ function SettingsPageContent() {
                         <button
                           onClick={() => handleSaveCategory(editingCategory)}
                           disabled={rulesSaving}
-                          className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50"
+                          className="px-4 py-2 bg-primary text-textPrimary font-bold rounded-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 disabled:opacity-50"
                         >
                           Save
                         </button>
                         <button
                           onClick={() => setEditingCategory(null)}
-                          className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
+                          className="px-4 py-2 bg-surface text-textMuted border border-border/60 rounded-lg hover:bg-surfaceElevated transition-all"
                         >
                           Cancel
                         </button>
@@ -1084,7 +1092,7 @@ function SettingsPageContent() {
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="font-medium text-gray-900 dark:text-white">
+                          <h3 className="font-bold text-textPrimary">
                             {category.label}
                           </h3>
                           <span className="text-sm text-gray-500 dark:text-gray-400">
@@ -1108,7 +1116,7 @@ function SettingsPageContent() {
                       </div>
                       <button
                         onClick={() => setEditingCategory(category)}
-                        className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+                        className="px-4 py-2 bg-primary text-textPrimary font-bold rounded-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
                       >
                         Edit
                       </button>
@@ -1134,7 +1142,7 @@ function SettingsPageContent() {
               <button
                 onClick={handleMigratePrompts}
                 disabled={migratingPrompts}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 text-sm"
+                className="px-4 py-2 bg-primary text-textPrimary font-bold rounded-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 disabled:opacity-50 text-sm"
               >
                 {migratingPrompts ? 'Migrating...' : 'Migrate Code Prompts to Database'}
               </button>
@@ -1281,13 +1289,13 @@ function SettingsPageContent() {
 
             <div className="flex flex-wrap items-end gap-4 mb-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-textMuted mb-1">
                   Status
                 </label>
                 <select
                   value={auditStatus}
                   onChange={(e) => setAuditStatus(e.target.value as any)}
-                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="px-3 py-2 bg-surface border border-border/60 rounded-lg text-textPrimary focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                 >
                   <option value="all">All</option>
                   <option value="success">Success</option>
@@ -1295,13 +1303,13 @@ function SettingsPageContent() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-textMuted mb-1">
                   Provider
                 </label>
                 <select
                   value={auditProvider}
                   onChange={(e) => setAuditProvider(e.target.value as any)}
-                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="px-3 py-2 bg-surface border border-border/60 rounded-lg text-textPrimary focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                 >
                   <option value="all">All</option>
                   <option value="openai">OpenAI</option>
@@ -1309,13 +1317,13 @@ function SettingsPageContent() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-textMuted mb-1">
                   Page Size
                 </label>
                 <select
                   value={auditLimit}
                   onChange={(e) => setAuditLimit(parseInt(e.target.value, 10))}
-                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="px-3 py-2 bg-surface border border-border/60 rounded-lg text-textPrimary focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                 >
                   <option value={25}>25</option>
                   <option value={50}>50</option>
@@ -1325,7 +1333,7 @@ function SettingsPageContent() {
               <button
                 onClick={() => setAuditOffset(0)}
                 disabled={auditLoading}
-                className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50"
+                className="px-4 py-2 bg-primary text-textPrimary font-bold rounded-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 disabled:opacity-50"
               >
                 {auditLoading ? 'Refreshing...' : 'Refresh'}
               </button>
@@ -1448,14 +1456,14 @@ function SettingsPageContent() {
                 <button
                   onClick={() => setAuditOffset(Math.max(0, auditOffset - auditLimit))}
                   disabled={auditOffset === 0 || auditLoading}
-                  className="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 disabled:opacity-50"
+                  className="px-3 py-1 rounded-lg border border-border/60 bg-surface text-textMuted hover:bg-surfaceElevated transition-all disabled:opacity-50"
                 >
                   Previous
                 </button>
                 <button
                   onClick={() => setAuditOffset(auditOffset + auditLimit)}
                   disabled={auditOffset + auditLimit >= auditTotal || auditLoading}
-                  className="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 disabled:opacity-50"
+                  className="px-3 py-1 rounded-lg border border-border/60 bg-surface text-textMuted hover:bg-surfaceElevated transition-all disabled:opacity-50"
                 >
                   Next
                 </button>
@@ -1492,13 +1500,13 @@ function SettingsPageContent() {
 
             <div className="flex flex-wrap items-end gap-4 mb-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-textMuted mb-1">
                   Page Size
                 </label>
                 <select
                   value={correctionsLimit}
                   onChange={(e) => setCorrectionsLimit(parseInt(e.target.value, 10))}
-                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="px-3 py-2 bg-surface border border-border/60 rounded-lg text-textPrimary focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                 >
                   <option value={25}>25</option>
                   <option value={50}>50</option>
@@ -1508,7 +1516,7 @@ function SettingsPageContent() {
               <button
                 onClick={() => setCorrectionsOffset(0)}
                 disabled={correctionsLoading}
-                className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50"
+                className="px-4 py-2 bg-primary text-textPrimary font-bold rounded-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 disabled:opacity-50"
               >
                 {correctionsLoading ? 'Refreshing...' : 'Refresh'}
               </button>
@@ -1579,14 +1587,14 @@ function SettingsPageContent() {
                   <button
                     onClick={() => setCorrectionsOffset(Math.max(0, correctionsOffset - correctionsLimit))}
                     disabled={correctionsOffset === 0 || correctionsLoading}
-                    className="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 disabled:opacity-50"
+                    className="px-3 py-1 rounded-lg border border-border/60 bg-surface text-textMuted hover:bg-surfaceElevated transition-all disabled:opacity-50"
                   >
                     Previous
                   </button>
                   <button
                     onClick={() => setCorrectionsOffset(correctionsOffset + correctionsLimit)}
                     disabled={correctionsOffset + correctionsLimit >= correctionsTotal || correctionsLoading}
-                    className="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 disabled:opacity-50"
+                    className="px-3 py-1 rounded-lg border border-border/60 bg-surface text-textMuted hover:bg-surfaceElevated transition-all disabled:opacity-50"
                   >
                     Next
                   </button>
@@ -1612,40 +1620,40 @@ function SettingsPageContent() {
             <div className="mb-6 flex gap-2">
               <button
                 onClick={() => setTokenUsagePeriod('day')}
-                className={`px-4 py-2 rounded ${
-                  tokenUsagePeriod === 'day'
-                    ? 'bg-indigo-600 text-white'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                }`}
+              className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                tokenUsagePeriod === 'day'
+                  ? 'bg-primary text-textPrimary shadow-lg shadow-primary/20'
+                  : 'bg-surface text-textMuted hover:bg-surfaceElevated border border-border/60'
+              }`}
               >
                 Today
               </button>
               <button
                 onClick={() => setTokenUsagePeriod('week')}
-                className={`px-4 py-2 rounded ${
+                className={`px-4 py-2 rounded transition-all ${
                   tokenUsagePeriod === 'week'
-                    ? 'bg-indigo-600 text-white'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                    ? 'bg-primary text-textPrimary shadow-lg shadow-primary/20'
+                    : 'bg-surface text-textMuted hover:bg-surfaceElevated border border-border/60'
                 }`}
               >
                 This Week
               </button>
               <button
                 onClick={() => setTokenUsagePeriod('month')}
-                className={`px-4 py-2 rounded ${
+                className={`px-4 py-2 rounded transition-all ${
                   tokenUsagePeriod === 'month'
-                    ? 'bg-indigo-600 text-white'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                    ? 'bg-primary text-textPrimary shadow-lg shadow-primary/20'
+                    : 'bg-surface text-textMuted hover:bg-surfaceElevated border border-border/60'
                 }`}
               >
                 This Month
               </button>
               <button
                 onClick={() => setTokenUsagePeriod('all')}
-                className={`px-4 py-2 rounded ${
+                className={`px-4 py-2 rounded transition-all ${
                   tokenUsagePeriod === 'all'
-                    ? 'bg-indigo-600 text-white'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                    ? 'bg-primary text-textPrimary shadow-lg shadow-primary/20'
+                    : 'bg-surface text-textMuted hover:bg-surfaceElevated border border-border/60'
                 }`}
               >
                 All Time
@@ -1765,7 +1773,7 @@ function SettingsPageContent() {
                       {tokenUsageStats.recent.slice(0, 10).map((record: any) => (
                         <div
                           key={record.id}
-                          className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3 border border-gray-200 dark:border-gray-700"
+                          className="bg-background rounded-lg p-3 border border-border/60"
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
@@ -1811,8 +1819,8 @@ function SettingsPageContent() {
 export default function SettingsPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center text-textMuted">Loading...</div>
       </div>
     }>
       <SettingsPageContent />

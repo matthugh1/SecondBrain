@@ -213,3 +213,93 @@ export async function detectTaskQueryIntent(messageText: string): Promise<TaskQu
     return detectIntentWithOpenAI(messageText)
   }
 }
+
+/**
+ * Detect if a message is a general query (not just task query)
+ * Returns true if the message is asking about existing data
+ */
+export async function detectGeneralQueryIntent(messageText: string): Promise<boolean> {
+  const lowerText = messageText.toLowerCase().trim()
+  
+  // Quick heuristic checks
+  const queryPatterns = [
+    /^(show|list|find|search|get|tell me|what|which|who|when|where|how many)/i,
+    /\?$/, // Ends with question mark
+    /^(show me|list all|find all|search for)/i,
+  ]
+  
+  const isQueryPattern = queryPatterns.some(pattern => pattern.test(messageText))
+  
+  // If it matches query patterns, it's likely a query
+  if (isQueryPattern) {
+    return true
+  }
+  
+  // Use AI to detect if it's a query vs capture
+  const apiKey = aiProvider === 'anthropic' 
+    ? process.env.ANTHROPIC_API_KEY 
+    : process.env.OPENAI_API_KEY
+
+  if (!apiKey) {
+    return isQueryPattern
+  }
+
+  const prompt = `Determine if this message is a QUERY (asking about existing data) or a CAPTURE (creating new data).
+
+Message: "${messageText}"
+
+QUERY examples:
+- "show me all projects related to Sarah"
+- "what ideas haven't I touched in 30 days?"
+- "list active projects"
+- "find projects with no next action"
+
+CAPTURE examples:
+- "remember to call John"
+- "I need to finish the report"
+- "Sarah mentioned the project deadline"
+
+Return ONLY JSON:
+{
+  "isQuery": boolean
+}`
+
+  try {
+    if (aiProvider === 'anthropic') {
+      const anthropic = new Anthropic({ apiKey })
+      const response = await anthropic.messages.create({
+        model: 'claude-3-5-haiku-20241022',
+        max_tokens: 128,
+        messages: [{ role: 'user', content: prompt }],
+      })
+
+      const content = response.content[0]
+      if (content.type === 'text') {
+        let jsonStr = content.text.trim()
+        if (jsonStr.startsWith('```')) {
+          jsonStr = jsonStr.replace(/^```json\n?/, '').replace(/```$/, '').trim()
+        }
+        const result = JSON.parse(jsonStr)
+        return result.isQuery === true
+      }
+    } else {
+      const openai = new OpenAI({ apiKey })
+      const response = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [{ role: 'user', content: prompt }],
+        response_format: { type: 'json_object' },
+        temperature: 0.1,
+      })
+
+      const content = response.choices[0]?.message?.content
+      if (content) {
+        const result = JSON.parse(content)
+        return result.isQuery === true
+      }
+    }
+  } catch (error) {
+    console.error('Error detecting general query intent:', error)
+  }
+
+  return isQueryPattern
+}

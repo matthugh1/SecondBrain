@@ -13,6 +13,7 @@
     "db:generate": "prisma generate",
     "db:studio": "prisma studio",
     "db:push": "prisma db push",
+    "db:seed-calendar": "tsx prisma/seed-calendar.ts",
     "mcp:dev": "cd mcp-server && npm install && tsx index.ts",
     "mcp:start": "cd mcp-server && npm install && tsx index.ts"
   },
@@ -26,7 +27,8 @@
     "node-cron": "^3.0.3",
     "openai": "^4.47.0",
     "react": "18.3.1",
-    "react-dom": "18.3.1"
+    "react-dom": "18.3.1",
+    "reactflow": "^11.11.4"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
