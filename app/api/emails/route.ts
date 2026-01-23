@@ -67,16 +67,22 @@ export async function POST(request: NextRequest) {
     }
 
     // Process incoming email (webhook)
+    // Type guard: ensure we have webhook data (not sync)
+    if ('sync' in data && data.sync === 'gmail') {
+      return NextResponse.json({ error: 'Sync request already handled' }, { status: 400 })
+    }
+    
+    const webhookData = data as Extract<typeof data, { messageId?: string }>
     const { processIncomingEmail } = await import('@/lib/services/email-capture')
     const result = await processIncomingEmail(tenantId, {
-      messageId: data.messageId || `webhook-${Date.now()}`,
-      subject: data.subject || '',
-      body: data.body || data.text || '',
-      senderEmail: data.senderEmail || data.from || '',
-      senderName: data.senderName,
-      recipientEmail: data.recipientEmail || data.to || '',
-      receivedAt: data.receivedAt ? new Date(data.receivedAt) : new Date(),
-      attachments: data.attachments,
+      messageId: webhookData.messageId || `webhook-${Date.now()}`,
+      subject: webhookData.subject || '',
+      body: webhookData.body || webhookData.text || '',
+      senderEmail: webhookData.senderEmail || webhookData.from || '',
+      senderName: webhookData.senderName,
+      recipientEmail: webhookData.recipientEmail || webhookData.to || '',
+      receivedAt: webhookData.receivedAt ? new Date(webhookData.receivedAt) : new Date(),
+      attachments: webhookData.attachments,
     })
 
     return NextResponse.json({ success: true, email: result })
