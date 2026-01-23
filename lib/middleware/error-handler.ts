@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { AppError, isAppError } from '@/lib/errors/app-error'
 import { getContextLogger } from '@/lib/logger/context'
+import { getRequestContext } from '@/lib/logger/context'
+import * as Sentry from '@sentry/nextjs'
 
 /**
  * Sanitize error message for client
@@ -73,6 +75,38 @@ export function handleError(error: unknown, context?: string): NextResponse {
 
   // Sanitize error for client
   const sanitized = sanitizeError(error)
+
+  // Send to Sentry with context (only in production or when DSN is set)
+  if (process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN) {
+    const requestContext = getRequestContext()
+    if (requestContext) {
+      Sentry.setContext('request', {
+        requestId: requestContext.requestId,
+        tenantId: requestContext.tenantId ? requestContext.tenantId.substring(0, 8) + '...' : undefined,
+        userId: requestContext.userId ? requestContext.userId.substring(0, 8) + '...' : undefined,
+        ipAddress: requestContext.ipAddress,
+        userAgent: requestContext.userAgent,
+      })
+    }
+
+    // Set tags for filtering
+    if (isAppError(error)) {
+      Sentry.setTag('error_code', error.code)
+      Sentry.setTag('error_type', 'app_error')
+    } else if (error instanceof Error) {
+      Sentry.setTag('error_type', error.name || 'unknown')
+    }
+
+    // Capture exception in Sentry
+    Sentry.captureException(error, {
+      tags: {
+        context: context || 'unknown',
+      },
+      extra: {
+        sanitized: sanitized,
+      },
+    })
+  }
 
   return NextResponse.json(
     {
